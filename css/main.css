@@ -10,6 +10,58 @@ background:#050505;
 color:white;
 overflow:hidden;
 }
+/* AÑADE A main.css */
+
+.hidden{
+display:none;
+}
+
+.pvp-panel{
+margin-top:20px;
+display:flex;
+flex-direction:column;
+gap:14px;
+}
+
+.pvp-title{
+font-size:18px;
+font-weight:700;
+letter-spacing:2px;
+opacity:.9;
+}
+
+.pvp-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:14px;
+}
+
+.pvp-side{
+display:flex;
+flex-direction:column;
+gap:10px;
+padding:14px;
+border-radius:14px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.08);
+}
+
+.pvp-side input[type="color"]{
+height:48px;
+padding:4px;
+cursor:pointer;
+background:none;
+border:none;
+}
+
+.card{
+cursor:pointer;
+}
+
+.card.active{
+border:1px solid rgba(255,255,255,.25);
+background:rgba(255,255,255,.06);
+}
 
 .app{
 display:flex;
