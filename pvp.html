@@ -1,0 +1,105 @@
+<!-- team-pvp.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zone Zero Media - Team PVP</title>
+
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/pvp.css">
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+
+<div class="logo">
+<h1>ZONE ZERO</h1>
+<span>MEDIA</span>
+</div>
+
+<button class="toggle-close" onclick="toggleSidebar()">✕</button>
+
+<a href="index.html" class="back-btn">← 5V5 Generator</a>
+
+<div class="section">
+
+<h3>TEAM PVP</h3>
+
+<div class="pvp-grid">
+
+<div class="pvp-player">
+
+<div class="avatar-status" id="left_status">
+<span class="status idle"></span>
+</div>
+
+<label>Nick 1</label>
+<input id="leftNick" placeholder="Roblox username">
+
+<label>Name 1</label>
+<input id="leftName" placeholder="Display name">
+
+<label>Color 1</label>
+<input type="color" id="color1" value="#5b8cff">
+
+</div>
+
+<div class="pvp-player">
+
+<div class="avatar-status" id="right_status">
+<span class="status idle"></span>
+</div>
+
+<label>Nick 2</label>
+<input id="rightNick" placeholder="Roblox username">
+
+<label>Name 2</label>
+<input id="rightName" placeholder="Display name">
+
+<label>Color 2</label>
+<input type="color" id="color2" value="#ff4f7a">
+
+</div>
+
+</div>
+
+<label>Score</label>
+<input id="score" placeholder="0-0">
+
+</div>
+
+<div class="actions">
+<button onclick="saveLocalPVP()">Save Local</button>
+<button onclick="downloadTXTPVP()">Save TXT</button>
+<button onclick="loadTXTPVP()">Load TXT</button>
+<button onclick="reloadAvatars()">Reload Avatars</button>
+<button onclick="downloadImage()">Save Photo</button>
+</div>
+
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+<button class="mobile-open" onclick="toggleSidebar()">☰</button>
+<h2>TEAM PVP</h2>
+</div>
+
+<section class="editor">
+<canvas id="canvas" width="1152" height="648"></canvas>
+</section>
+
+</main>
+
+</div>
+
+<input type="file" id="txtLoader" hidden accept=".txt,.json">
+
+<script src="js/pvp.js"></script>
+
+</body>
+</html>
