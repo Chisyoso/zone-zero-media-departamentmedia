@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zone Zero Media</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <h1>ZONE ZERO</h1>
+      <span>MEDIA</span>
+    </div>
+
+    <button class="back-btn" onclick="goHome()">← Index</button>
+
+    <div class="section">
+      <h3>Formation</h3>
+
+      <label>Background URL</label>
+      <input type="text" id="stadium" placeholder="Imgur image URL">
+
+      <div id="players"></div>
+    </div>
+
+    <div class="actions">
+      <button onclick="saveLocal()">Save Local</button>
+      <button onclick="downloadTXT()">Save TXT</button>
+      <button onclick="loadTXT()">Load TXT</button>
+      <button onclick="downloadImage()">Save Photo</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>Image Editor</h2>
+    </div>
+
+    <section id="home" class="home">
+      <div class="card active-card">
+        <h3>5V5 Generator</h3>
+        <p>Main editor ready.</p>
+      </div>
+
+      <div class="card disabled">
+        <h3>Card Generator</h3>
+        <p>Coming soon</p>
+      </div>
+
+      <div class="card disabled">
+        <h3>Profile Creator</h3>
+        <p>Coming soon</p>
+      </div>
+
+      <div class="card disabled">
+        <h3>Team Banner</h3>
+        <p>Coming soon</p>
+      </div>
+    </section>
+
+    <section class="editor">
+      <canvas id="canvas" width="1600" height="1000"></canvas>
+    </section>
+  </main>
+
+</div>
+
+<input type="file" id="txtLoader" accept=".txt,.json" hidden>
+
+<script src="script.js"></script>
+</body>
+</html>
