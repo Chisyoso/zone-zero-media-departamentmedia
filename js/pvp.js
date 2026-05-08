@@ -1,675 +1,733 @@
-const pvpCanvas = document.getElementById("pvpCanvas");
-const pvpCtx = pvpCanvas.getContext("2d");
+// js/pvp.js
 
-const PVP_WIDTH = 1152;
-const PVP_HEIGHT = 648;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-const VS_IMAGE = "https://i.imgur.com/DOys6I4.png";
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
 
-const pvpAvatarCache = new Map();
-const pvpUserCache = new Map();
-const pvpThumbCache = new Map();
-const pvpLoading = new Map();
+const avatarCache = new Map();
+const thumbCache = new Map();
+const userCache = new Map();
 
-function pvpGet(id) {
-  return document.getElementById(id);
+const VS_IMAGE =
+"https://i.imgur.com/DOys6I4.png";
+
+function delay(ms){
+return new Promise(r=>setTimeout(r,ms));
 }
 
-function pvpDelay(ms) {
-  return new Promise(r => setTimeout(r, ms));
+function setStatus(side,state){
+
+const el =
+document.getElementById(side+"_status");
+
+if(!el) return;
+
+if(state==="loading"){
+el.innerHTML =
+`<span class="status loading"></span>`;
+return;
 }
 
-function pvpRoundedRect(ctx, x, y, w, h, r) {
-  const radius = Math.min(r, w / 2, h / 2);
-
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
+if(state==="success"){
+el.innerHTML =
+`<span class="status success">✓</span>`;
+return;
 }
 
-function pvpHash(str) {
-  let h = 0;
-
-  for (let i = 0; i < str.length; i++) {
-    h = (h << 5) - h + str.charCodeAt(i);
-    h |= 0;
-  }
-
-  return Math.abs(h);
+if(state==="error"){
+el.innerHTML =
+`<span class="status error">!</span>`;
+return;
 }
 
-function pvpPalette(seed) {
-  const hue = pvpHash(seed || "?") % 360;
-
-  return {
-    main: `hsl(${hue},85%,60%)`,
-    glow: `hsla(${hue},85%,60%,0.45)`,
-    dark: `hsla(${hue},85%,20%,0.85)`
-  };
+el.innerHTML =
+`<span class="status idle"></span>`;
 }
 
-function pvpSetStatus(id, state) {
-  const el = pvpGet(id);
+async function loadImage(src){
 
-  if (!el) return;
+return new Promise(resolve=>{
 
-  if (state === "loading") {
-    el.innerHTML = `<span class="status loading"></span>`;
-    return;
-  }
+if(!src) return resolve(null);
 
-  if (state === "success") {
-    el.innerHTML = `<span class="status success">✓</span>`;
-    return;
-  }
+const img = new Image();
 
-  if (state === "error") {
-    el.innerHTML = `<span class="status error">!</span>`;
-    return;
-  }
+img.crossOrigin = "anonymous";
 
-  el.innerHTML = `<span class="status idle"></span>`;
+img.onload = ()=>resolve(img);
+
+img.onerror = ()=>resolve(null);
+
+img.src =
+src +
+(src.includes("?") ? "&" : "?") +
+"t=" +
+Date.now();
+
+});
+
 }
 
-async function pvpLoadImage(src, retries = 5) {
-  return new Promise(resolve => {
-    if (!src) return resolve(null);
+async function getUserId(username){
 
-    let tries = 0;
+const clean =
+username.trim().toLowerCase();
 
-    const tryLoad = () => {
-      tries++;
-
-      const img = new Image();
-
-      img.crossOrigin = "anonymous";
-
-      const timeout = setTimeout(() => {
-        if (tries >= retries) {
-          resolve(null);
-        } else {
-          setTimeout(tryLoad, 500);
-        }
-      }, 8000);
-
-      img.onload = () => {
-        clearTimeout(timeout);
-        resolve(img);
-      };
-
-      img.onerror = () => {
-        clearTimeout(timeout);
-
-        if (tries >= retries) {
-          resolve(null);
-        } else {
-          setTimeout(tryLoad, 500);
-        }
-      };
-
-      img.src =
-        src +
-        (src.includes("?") ? "&" : "?") +
-        "t=" +
-        Date.now() +
-        "_" +
-        tries;
-    };
-
-    tryLoad();
-  });
+if(userCache.has(clean)){
+return userCache.get(clean);
 }
 
-async function pvpGetUserId(username) {
-  const clean = username.trim().toLowerCase();
+try{
 
-  if (!clean) return null;
+const res = await fetch(
+"https://users.roblox.com/v1/usernames/users",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+usernames:[username],
+excludeBannedUsers:false
+})
+}
+);
 
-  if (pvpUserCache.has(clean)) {
-    return pvpUserCache.get(clean);
-  }
+const json = await res.json();
 
-  try {
-    const res = await fetch(
-      "https://users.roblox.com/v1/usernames/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false
-        })
-      }
-    );
+const id =
+json?.data?.[0]?.id;
 
-    const json = await res.json();
+if(!id) return null;
 
-    const id = json?.data?.[0]?.id;
+userCache.set(clean,id);
 
-    if (!id) return null;
+return id;
 
-    pvpUserCache.set(clean, String(id));
+}catch{
 
-    return String(id);
+return null;
 
-  } catch {
-    return null;
-  }
+}
 }
 
-async function pvpGetAvatarUrl(username) {
-  const clean = username.trim().toLowerCase();
+async function getAvatarURL(username){
 
-  if (!clean) return null;
+const clean =
+username.trim().toLowerCase();
 
-  if (pvpThumbCache.has(clean)) {
-    return pvpThumbCache.get(clean);
-  }
-
-  const userId = await pvpGetUserId(username);
-
-  if (!userId) return null;
-
-  try {
-
-    const res = await fetch(
-      `https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=720x720&format=Png&isCircular=false`
-    );
-
-    const json = await res.json();
-
-    const url = json?.data?.[0]?.imageUrl;
-
-    if (!url) return null;
-
-    pvpThumbCache.set(clean, url);
-
-    return url;
-
-  } catch {
-    return null;
-  }
+if(thumbCache.has(clean)){
+return thumbCache.get(clean);
 }
 
-async function pvpLoadAvatar(username, statusId) {
+const userId =
+await getUserId(username);
 
-  const clean = username.trim().toLowerCase();
+if(!userId) return null;
 
-  if (!clean) return null;
+try{
 
-  if (pvpAvatarCache.has(clean)) {
-    pvpSetStatus(statusId, "success");
-    return pvpAvatarCache.get(clean);
-  }
+const res = await fetch(
+`https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=720x720&format=Png&isCircular=false`
+);
 
-  pvpSetStatus(statusId, "loading");
+const json = await res.json();
 
-  const avatarUrl = await pvpGetAvatarUrl(username);
+const imageUrl =
+json?.data?.[0]?.imageUrl;
 
-  if (!avatarUrl) {
-    pvpSetStatus(statusId, "error");
-    return null;
-  }
+if(!imageUrl) return null;
 
-  const img = await pvpLoadImage(avatarUrl, 6);
+thumbCache.set(clean,imageUrl);
 
-  if (!img) {
-    pvpSetStatus(statusId, "error");
-    return null;
-  }
+return imageUrl;
 
-  pvpAvatarCache.set(clean, img);
+}catch{
 
-  pvpSetStatus(statusId, "success");
+return null;
 
-  return img;
+}
 }
 
-function pvpFitFont(text, maxWidth, start) {
-  let size = start;
+async function getAvatar(username,side){
 
-  while (size > 8) {
+if(!username){
 
-    pvpCtx.font = `bold ${size}px Arial`;
+setStatus(side,"idle");
 
-    if (pvpCtx.measureText(text).width <= maxWidth) {
-      return size;
-    }
+return null;
 
-    size--;
-  }
-
-  return size;
 }
 
-function pvpText(text, x, y, maxWidth, startSize, fill, stroke, line) {
+const clean =
+username.trim().toLowerCase();
 
-  const size = pvpFitFont(text, maxWidth, startSize);
+if(avatarCache.has(clean)){
 
-  pvpCtx.font = `bold ${size}px Arial`;
+setStatus(side,"success");
 
-  pvpCtx.textAlign = "center";
-  pvpCtx.textBaseline = "middle";
+return avatarCache.get(clean);
 
-  pvpCtx.lineWidth = line;
-  pvpCtx.strokeStyle = stroke;
-  pvpCtx.fillStyle = fill;
-
-  pvpCtx.strokeText(text, x, y);
-  pvpCtx.fillText(text, x, y);
 }
 
-async function pvpDrawPlayer({
-  username,
-  displayName,
-  x,
-  color1,
-  color2,
-  statusId
-}) {
+setStatus(side,"loading");
 
-  const avatar = await pvpLoadAvatar(username, statusId);
+const avatarURL =
+await getAvatarURL(username);
 
-  const palette = {
-    main: color1 || pvpPalette(username).main,
-    glow: color2 || pvpPalette(username).glow
-  };
+if(!avatarURL){
 
-  const boxW = 360;
-  const boxH = 440;
+setStatus(side,"error");
 
-  const boxX = x - boxW / 2;
-  const boxY = 90;
+return null;
 
-  pvpCtx.save();
-
-  pvpCtx.shadowColor = palette.glow;
-  pvpCtx.shadowBlur = 35;
-
-  pvpRoundedRect(
-    pvpCtx,
-    boxX,
-    boxY,
-    boxW,
-    boxH,
-    26
-  );
-
-  pvpCtx.fillStyle = "rgba(255,255,255,0.03)";
-  pvpCtx.fill();
-
-  pvpCtx.lineWidth = 2;
-  pvpCtx.strokeStyle = "rgba(255,255,255,0.08)";
-  pvpCtx.stroke();
-
-  pvpCtx.restore();
-
-  if (avatar) {
-
-    const size = 360;
-
-    pvpCtx.drawImage(
-      avatar,
-      x - size / 2,
-      140,
-      size,
-      size
-    );
-  }
-
-  const grad = pvpCtx.createLinearGradient(
-    x - 120,
-    525,
-    x + 120,
-    525
-  );
-
-  grad.addColorStop(0, color1 || "#ffffff");
-  grad.addColorStop(1, color2 || "#888888");
-
-  pvpCtx.fillStyle = grad;
-
-  pvpCtx.fillRect(
-    x - 120,
-    520,
-    240,
-    12
-  );
-
-  pvpText(
-    displayName,
-    x,
-    70,
-    340,
-    42,
-    "white",
-    "rgba(0,0,0,.95)",
-    9
-  );
 }
 
-async function pvpRender() {
+const img =
+await loadImage(avatarURL);
 
-  pvpCtx.clearRect(
-    0,
-    0,
-    PVP_WIDTH,
-    PVP_HEIGHT
-  );
+if(!img){
 
-  pvpCtx.fillStyle = "#1b1b1b";
-  pvpCtx.fillRect(
-    0,
-    0,
-    PVP_WIDTH,
-    PVP_HEIGHT
-  );
+setStatus(side,"error");
 
-  const bgUrl = pvpGet("pvp_background").value.trim();
+return null;
 
-  if (bgUrl) {
-
-    const bg = await pvpLoadImage(bgUrl, 3);
-
-    if (bg) {
-
-      pvpCtx.drawImage(
-        bg,
-        0,
-        0,
-        PVP_WIDTH,
-        PVP_HEIGHT
-      );
-
-      pvpCtx.fillStyle = "rgba(0,0,0,.55)";
-      pvpCtx.fillRect(
-        0,
-        0,
-        PVP_WIDTH,
-        PVP_HEIGHT
-      );
-    }
-  }
-
-  const leftNick = pvpGet("pvp_left_nick").value.trim();
-  const rightNick = pvpGet("pvp_right_nick").value.trim();
-
-  const leftName =
-    pvpGet("pvp_left_name").value.trim() ||
-    leftNick ||
-    "Player 1";
-
-  const rightName =
-    pvpGet("pvp_right_name").value.trim() ||
-    rightNick ||
-    "Player 2";
-
-  const score =
-    pvpGet("pvp_score").value.trim() ||
-    "0-0";
-
-  const leftColor1 = pvpGet("pvp_left_color1").value;
-  const leftColor2 = pvpGet("pvp_left_color2").value;
-
-  const rightColor1 = pvpGet("pvp_right_color1").value;
-  const rightColor2 = pvpGet("pvp_right_color2").value;
-
-  await pvpDrawPlayer({
-    username: leftNick,
-    displayName: leftName,
-    x: 250,
-    color1: leftColor1,
-    color2: leftColor2,
-    statusId: "pvp_left_status"
-  });
-
-  await pvpDrawPlayer({
-    username: rightNick,
-    displayName: rightName,
-    x: 902,
-    color1: rightColor1,
-    color2: rightColor2,
-    statusId: "pvp_right_status"
-  });
-
-  const vs = await pvpLoadImage(VS_IMAGE, 3);
-
-  if (vs) {
-
-    pvpCtx.save();
-
-    pvpCtx.shadowColor = "rgba(255,0,0,.45)";
-    pvpCtx.shadowBlur = 30;
-
-    pvpCtx.drawImage(
-      vs,
-      PVP_WIDTH / 2 - 110,
-      PVP_HEIGHT / 2 - 110,
-      220,
-      220
-    );
-
-    pvpCtx.restore();
-  }
-
-  pvpText(
-    score,
-    PVP_WIDTH / 2,
-    590,
-    320,
-    105,
-    "white",
-    "rgba(0,0,0,.95)",
-    10
-  );
-
-  pvpCtx.fillStyle = "rgba(255,255,255,.04)";
-  pvpCtx.fillRect(
-    0,
-    0,
-    PVP_WIDTH,
-    PVP_HEIGHT
-  );
 }
 
-function pvpCollectData() {
+avatarCache.set(clean,img);
 
-  return {
+setStatus(side,"success");
 
-    background: pvpGet("pvp_background").value,
-
-    leftNick: pvpGet("pvp_left_nick").value,
-    rightNick: pvpGet("pvp_right_nick").value,
-
-    leftName: pvpGet("pvp_left_name").value,
-    rightName: pvpGet("pvp_right_name").value,
-
-    leftColor1: pvpGet("pvp_left_color1").value,
-    leftColor2: pvpGet("pvp_left_color2").value,
-
-    rightColor1: pvpGet("pvp_right_color1").value,
-    rightColor2: pvpGet("pvp_right_color2").value,
-
-    score: pvpGet("pvp_score").value
-  };
+return img;
 }
 
-function pvpApplyData(data) {
+function roundedRect(x,y,w,h,r){
 
-  pvpGet("pvp_background").value =
-    data.background || "";
+ctx.beginPath();
 
-  pvpGet("pvp_left_nick").value =
-    data.leftNick || "";
+ctx.moveTo(x+r,y);
 
-  pvpGet("pvp_right_nick").value =
-    data.rightNick || "";
+ctx.lineTo(x+w-r,y);
 
-  pvpGet("pvp_left_name").value =
-    data.leftName || "";
+ctx.quadraticCurveTo(
+x+w,
+y,
+x+w,
+y+r
+);
 
-  pvpGet("pvp_right_name").value =
-    data.rightName || "";
+ctx.lineTo(x+w,y+h-r);
 
-  pvpGet("pvp_left_color1").value =
-    data.leftColor1 || "#3b82f6";
+ctx.quadraticCurveTo(
+x+w,
+y+h,
+x+w-r,
+y+h
+);
 
-  pvpGet("pvp_left_color2").value =
-    data.leftColor2 || "#ffffff";
+ctx.lineTo(x+r,y+h);
 
-  pvpGet("pvp_right_color1").value =
-    data.rightColor1 || "#ef4444";
+ctx.quadraticCurveTo(
+x,
+y+h,
+x,
+y+h-r
+);
 
-  pvpGet("pvp_right_color2").value =
-    data.rightColor2 || "#ffffff";
+ctx.lineTo(x,y+r);
 
-  pvpGet("pvp_score").value =
-    data.score || "0-0";
+ctx.quadraticCurveTo(
+x,
+y,
+x+r,
+y
+);
 
-  pvpRender();
+ctx.closePath();
+
 }
 
-function pvpSaveLocal() {
+function drawBackground(){
 
-  localStorage.setItem(
-    "zzm_pvp_save",
-    JSON.stringify(
-      pvpCollectData()
-    )
-  );
+ctx.fillStyle = "#6f6f6f";
+ctx.fillRect(0,0,WIDTH,HEIGHT);
 
-  alert("PVP saved");
+const grad =
+ctx.createLinearGradient(
+0,
+0,
+0,
+HEIGHT
+);
+
+grad.addColorStop(
+0,
+"rgba(255,255,255,.05)"
+);
+
+grad.addColorStop(
+1,
+"rgba(0,0,0,.25)"
+);
+
+ctx.fillStyle = grad;
+ctx.fillRect(0,0,WIDTH,HEIGHT);
+
 }
 
-function pvpDownloadTXT() {
+async function drawVS(){
 
-  const blob = new Blob(
-    [
-      JSON.stringify(
-        pvpCollectData(),
-        null,
-        2
-      )
-    ],
-    {
-      type: "text/plain"
-    }
-  );
+const img =
+await loadImage(VS_IMAGE);
 
-  const a = document.createElement("a");
+if(!img) return;
 
-  a.href = URL.createObjectURL(blob);
+ctx.save();
 
-  a.download = "team-pvp.txt";
+ctx.shadowColor =
+"rgba(255,0,0,.45)";
 
-  a.click();
+ctx.shadowBlur = 25;
+
+ctx.drawImage(
+img,
+WIDTH/2-110,
+HEIGHT/2-110,
+220,
+220
+);
+
+ctx.restore();
+
 }
 
-function pvpLoadTXT() {
-  pvpGet("txtLoader").click();
+function fitText(text,max,start){
+
+let size = start;
+
+while(size > 10){
+
+ctx.font =
+`bold ${size}px Arial`;
+
+if(
+ctx.measureText(text).width
+<= max
+){
+return size;
+}
+
+size--;
+
+}
+
+return size;
+}
+
+function drawName(text,x,y,color){
+
+const size =
+fitText(text,320,44);
+
+ctx.font =
+`bold ${size}px Arial`;
+
+ctx.textAlign = "center";
+
+ctx.lineWidth = 8;
+
+ctx.strokeStyle =
+"rgba(0,0,0,.9)";
+
+ctx.strokeText(text,x,y);
+
+ctx.fillStyle = color;
+
+ctx.fillText(text,x,y);
+
+}
+
+async function render(){
+
+ctx.clearRect(0,0,WIDTH,HEIGHT);
+
+drawBackground();
+
+const leftNick =
+document.getElementById("leftNick")
+.value.trim();
+
+const rightNick =
+document.getElementById("rightNick")
+.value.trim();
+
+const leftName =
+document.getElementById("leftName")
+.value.trim() || leftNick;
+
+const rightName =
+document.getElementById("rightName")
+.value.trim() || rightNick;
+
+const color1 =
+document.getElementById("color1")
+.value;
+
+const color2 =
+document.getElementById("color2")
+.value;
+
+const score =
+document.getElementById("score")
+.value.trim() || "0-0";
+
+const leftAvatar =
+await getAvatar(leftNick,"left");
+
+const rightAvatar =
+await getAvatar(rightNick,"right");
+
+if(leftAvatar){
+
+ctx.drawImage(
+leftAvatar,
+40,
+90,
+430,
+430
+);
+
+}
+
+if(rightAvatar){
+
+ctx.drawImage(
+rightAvatar,
+WIDTH-470,
+90,
+430,
+430
+);
+
+}
+
+ctx.fillStyle =
+"rgba(255,255,255,.04)";
+
+roundedRect(
+30,
+70,
+450,
+470,
+28
+);
+
+ctx.fill();
+
+roundedRect(
+WIDTH-480,
+70,
+450,
+470,
+28
+);
+
+ctx.fill();
+
+ctx.lineWidth = 5;
+
+ctx.strokeStyle = color1;
+
+ctx.stroke();
+
+roundedRect(
+WIDTH-480,
+70,
+450,
+470,
+28
+);
+
+ctx.lineWidth = 5;
+
+ctx.strokeStyle = color2;
+
+ctx.stroke();
+
+drawName(
+leftName,
+250,
+65,
+color1
+);
+
+drawName(
+rightName,
+WIDTH-250,
+65,
+color2
+);
+
+ctx.font =
+"bold 100px Arial";
+
+ctx.textAlign = "center";
+
+ctx.lineWidth = 12;
+
+ctx.strokeStyle =
+"rgba(0,0,0,.9)";
+
+ctx.strokeText(
+score,
+WIDTH/2,
+600
+);
+
+ctx.fillStyle = "white";
+
+ctx.fillText(
+score,
+WIDTH/2,
+600
+);
+
+ctx.fillStyle = color1;
+
+ctx.fillRect(
+120,
+540,
+260,
+12
+);
+
+ctx.fillStyle = color2;
+
+ctx.fillRect(
+WIDTH-380,
+540,
+260,
+12
+);
+
+await drawVS();
+
+}
+
+let renderTimeout;
+
+document.addEventListener(
+"input",
+()=>{
+
+clearTimeout(renderTimeout);
+
+renderTimeout =
+setTimeout(()=>{
+render();
+},200);
+
+}
+);
+
+function collectPVPData(){
+
+return{
+leftNick:
+document.getElementById("leftNick").value,
+
+rightNick:
+document.getElementById("rightNick").value,
+
+leftName:
+document.getElementById("leftName").value,
+
+rightName:
+document.getElementById("rightName").value,
+
+color1:
+document.getElementById("color1").value,
+
+color2:
+document.getElementById("color2").value,
+
+score:
+document.getElementById("score").value
+};
+
+}
+
+function applyPVPData(data){
+
+document.getElementById("leftNick").value =
+data.leftNick || "";
+
+document.getElementById("rightNick").value =
+data.rightNick || "";
+
+document.getElementById("leftName").value =
+data.leftName || "";
+
+document.getElementById("rightName").value =
+data.rightName || "";
+
+document.getElementById("color1").value =
+data.color1 || "#5b8cff";
+
+document.getElementById("color2").value =
+data.color2 || "#ff4f7a";
+
+document.getElementById("score").value =
+data.score || "0-0";
+
+render();
+
+}
+
+function saveLocalPVP(){
+
+localStorage.setItem(
+"zzm_pvp_save",
+JSON.stringify(
+collectPVPData()
+)
+);
+
+alert("Saved locally");
+
+}
+
+function downloadTXTPVP(){
+
+const blob = new Blob(
+[
+JSON.stringify(
+collectPVPData(),
+null,
+2
+)
+],
+{
+type:"text/plain"
+}
+);
+
+const a =
+document.createElement("a");
+
+a.href =
+URL.createObjectURL(blob);
+
+a.download =
+"team-pvp.txt";
+
+a.click();
+
+}
+
+function loadTXTPVP(){
+
+document
+.getElementById("txtLoader")
+.click();
+
 }
 
 document
 .getElementById("txtLoader")
-.addEventListener("change", e => {
+.addEventListener(
+"change",
+e=>{
 
-  const file = e.target.files[0];
+const file =
+e.target.files[0];
 
-  if (!file) return;
+if(!file) return;
 
-  const reader = new FileReader();
+const reader =
+new FileReader();
 
-  reader.onload = () => {
+reader.onload = ()=>{
 
-    try {
+try{
 
-      const data =
-        JSON.parse(reader.result);
+applyPVPData(
+JSON.parse(reader.result)
+);
 
-      if (
-        data.leftNick !== undefined ||
-        data.rightNick !== undefined
-      ) {
+}catch{
 
-        pvpApplyData(data);
+alert("Invalid file");
 
-      }
-
-    } catch {
-      alert("Invalid file");
-    }
-
-  };
-
-  reader.readAsText(file);
-
-});
-
-function pvpDownloadImage() {
-
-  const a = document.createElement("a");
-
-  a.download = "team-pvp.png";
-
-  a.href =
-    pvpCanvas.toDataURL("image/png");
-
-  a.click();
 }
 
-async function pvpReloadAvatars() {
+};
 
-  pvpAvatarCache.clear();
-  pvpUserCache.clear();
-  pvpThumbCache.clear();
+reader.readAsText(file);
 
-  pvpSetStatus(
-    "pvp_left_status",
-    "loading"
-  );
+}
+);
 
-  pvpSetStatus(
-    "pvp_right_status",
-    "loading"
-  );
+function downloadImage(){
 
-  await pvpRender();
+const a =
+document.createElement("a");
+
+a.download =
+"team-pvp.png";
+
+a.href =
+canvas.toDataURL("image/png");
+
+a.click();
+
 }
 
-let pvpTimeout;
+async function reloadAvatars(){
 
-document.addEventListener("input", e => {
+avatarCache.clear();
+thumbCache.clear();
+userCache.clear();
 
-  if (!e.target.closest(".pvp-page")) {
-    return;
-  }
+setStatus("left","loading");
+setStatus("right","loading");
 
-  clearTimeout(pvpTimeout);
+await render();
 
-  pvpTimeout = setTimeout(() => {
-    pvpRender();
-  }, 250);
-
-});
-
-const pvpLocal =
-  localStorage.getItem("zzm_pvp_save");
-
-if (pvpLocal) {
-
-  try {
-
-    pvpApplyData(
-      JSON.parse(pvpLocal)
-    );
-
-  } catch {}
 }
 
-pvpRender();
+let sidebarOpen = false;
+
+function toggleSidebar(){
+
+sidebarOpen = !sidebarOpen;
+
+document
+.getElementById("sidebar")
+.classList.toggle(
+"open",
+sidebarOpen
+);
+
+}
+
+const local =
+localStorage.getItem(
+"zzm_pvp_save"
+);
+
+if(local){
+
+try{
+
+applyPVPData(
+JSON.parse(local)
+);
+
+}catch{}
+
+}
+
+render();
