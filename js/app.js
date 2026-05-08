@@ -107,44 +107,94 @@ ctx.closePath();
 
 }
 
-async function loadImage(src){
+async function loadImage(src,retries=5){
 
 return new Promise(resolve=>{
 
 if(!src) return resolve(null);
 
+let attempts = 0;
+
+function tryLoad(){
+
+attempts++;
+
 const img = new Image();
 
 img.crossOrigin = "anonymous";
 
-img.onload = ()=>resolve(img);
+const timeout = setTimeout(()=>{
 
-img.onerror = ()=>resolve(null);
+if(attempts < retries){
 
-img.src = src;
+setTimeout(tryLoad,700);
+
+}else{
+
+resolve(null);
+
+}
+
+},5000);
+
+img.onload = ()=>{
+
+clearTimeout(timeout);
+
+resolve(img);
+
+};
+
+img.onerror = ()=>{
+
+clearTimeout(timeout);
+
+if(attempts < retries){
+
+setTimeout(tryLoad,700);
+
+}else{
+
+resolve(null);
+
+}
+
+};
+
+img.src =
+src + (src.includes("?") ? "&" : "?")
++ "t=" + Date.now();
+
+}
+
+tryLoad();
 
 });
-
 }
 
 async function getAvatar(username,pos){
 
 if(!username) return null;
 
-if(avatarCache[username]){
-return avatarCache[username];
+const cleanName =
+username.trim().toLowerCase();
+
+if(avatarCache[cleanName]){
+return avatarCache[cleanName];
 }
 
-const status = document.getElementById(pos+"_status");
+const status =
+document.getElementById(pos+"_status");
 
-status.innerHTML = `<span class="status loading"></span>`;
-
-try{
+status.innerHTML =
+`<span class="status loading"></span>`;
 
 const url =
 `https://perfil-api.onrender.com/perfil/imagen?username=${encodeURIComponent(username)}`;
 
-const img = await loadImage(url);
+try{
+
+const img = await loadImage(url,5);
 
 if(!img){
 
@@ -154,7 +204,7 @@ status.innerHTML =
 return null;
 }
 
-avatarCache[username] = img;
+avatarCache[cleanName] = img;
 
 status.innerHTML =
 `<span class="status success">✓</span>`;
@@ -169,7 +219,6 @@ status.innerHTML =
 return null;
 
 }
-
 }
 
 function paletteFromSeed(seed){
@@ -303,8 +352,16 @@ pos.y+133
 
 }
 
-document.addEventListener("input",async()=>{
-await render();
+let renderTimeout;
+
+document.addEventListener("input",()=>{
+
+clearTimeout(renderTimeout);
+
+renderTimeout = setTimeout(()=>{
+render();
+},350);
+
 });
 
 document.addEventListener("change",e=>{
@@ -437,6 +494,25 @@ a.download = "zone-zero-media.png";
 a.href = canvas.toDataURL("image/png");
 
 a.click();
+
+}
+
+async function reloadAvatars(){
+
+Object.keys(avatarCache).forEach(k=>{
+delete avatarCache[k];
+});
+
+document
+.querySelectorAll(".avatar-status")
+.forEach(v=>{
+
+v.innerHTML =
+`<span class="status loading"></span>`;
+
+});
+
+await render();
 
 }
 
