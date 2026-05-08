@@ -30,6 +30,55 @@
 <input id="stadium" placeholder="Imgur background URL">
 
 <div id="players"></div>
+<!-- AÑADE ESTO DEBAJO DE <div id="players"></div> -->
+
+<div id="pvpPanel" class="pvp-panel hidden">
+
+<h3 class="pvp-title">TEAM PVP</h3>
+
+<div class="pvp-grid">
+
+<div class="pvp-side">
+
+<label>Nick 1</label>
+<input list="nicklist" id="pvp_nick1" placeholder="Username">
+
+<label>Name 1</label>
+<input id="pvp_name1" placeholder="Display Name">
+
+<label>Color 1</label>
+<input type="color" id="pvp_color1" value="#ff004c">
+
+</div>
+
+<div class="pvp-side">
+
+<label>Nick 2</label>
+<input list="nicklist" id="pvp_nick2" placeholder="Username">
+
+<label>Name 2</label>
+<input id="pvp_name2" placeholder="Display Name">
+
+<label>Color 2</label>
+<input type="color" id="pvp_color2" value="#00d9ff">
+
+</div>
+
+</div>
+
+<label>Score</label>
+<input id="pvp_score" placeholder="0-0">
+
+<label>Background URL</label>
+<input id="pvp_bg" placeholder="Background image URL">
+
+<div class="actions">
+<button onclick="reloadPvpAvatars()">
+Reload Avatars
+</button>
+</div>
+
+</div>
 
 </div>
 
@@ -55,6 +104,10 @@
 <div class="card active">
 <h3>5V5 Formation</h3>
 <p>Main generator ready</p>
+</div>
+<div class="card" onclick="switchMode('pvp')">
+<h3>Team PVP</h3>
+<p>Versus generator</p>
 </div>
 
 <div class="card disabled">
