@@ -189,12 +189,27 @@ document.getElementById(pos+"_status");
 status.innerHTML =
 `<span class="status loading"></span>`;
 
-const url =
-`https://perfil-api.onrender.com/perfil/imagen?username=${encodeURIComponent(username)}`;
-
 try{
 
-const img = await loadImage(url,5);
+const apiURL =
+`https://perfil-api.onrender.com/perfil/imagen?username=${encodeURIComponent(username)}`;
+
+const response = await fetch(apiURL);
+
+const data = await response.json();
+
+const imageUrl =
+data?.data?.[0]?.imageUrl;
+
+if(!imageUrl){
+
+status.innerHTML =
+`<span class="status error">!</span>`;
+
+return null;
+}
+
+const img = await loadImage(imageUrl,5);
 
 if(!img){
 
@@ -503,11 +518,12 @@ Object.keys(avatarCache).forEach(k=>{
 delete avatarCache[k];
 });
 
-document
-.querySelectorAll(".avatar-status")
-.forEach(v=>{
+positions.forEach(pos=>{
 
-v.innerHTML =
+const status =
+document.getElementById(pos.id+"_status");
+
+status.innerHTML =
 `<span class="status loading"></span>`;
 
 });
