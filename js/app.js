@@ -120,6 +120,54 @@ value="#00d9ff"
 
 });
 
+const globalColorInput =
+document.getElementById("globalColor");
+
+const useGlobalColor =
+document.getElementById("useGlobalColor");
+
+globalColorInput.addEventListener(
+  "input",
+  () => {
+
+    if (useGlobalColor.checked) {
+
+      positions.forEach(pos => {
+
+        document.getElementById(
+          pos.id + "_color"
+        ).value =
+          globalColorInput.value;
+
+      });
+
+    }
+
+    render();
+  }
+);
+
+useGlobalColor.addEventListener(
+  "change",
+  () => {
+
+    if (useGlobalColor.checked) {
+
+      positions.forEach(pos => {
+
+        document.getElementById(
+          pos.id + "_color"
+        ).value =
+          globalColorInput.value;
+
+      });
+
+    }
+
+    render();
+  }
+);
+
 function roundedRect(x, y, w, h, r) {
 
   ctx.beginPath();
@@ -427,51 +475,12 @@ function hexToRGBA(hex, alpha) {
 
 function getPlayerColor(posId, seed) {
 
-  const useGlobal =
-    document.getElementById("useGlobalColor")?.checked;
-
-  if (useGlobal) {
-
-    const globalColor =
-      document.getElementById("globalColor")?.value ||
-      "#00d9ff";
-
-    return {
-      main: globalColor,
-      glow: hexToRGBA(globalColor, .35)
-    };
-  }
-
   const customColor =
-    document.getElementById(posId + "_color")?.value;
-
-  if (customColor) {
-
-    return {
-      main: customColor,
-      glow: hexToRGBA(customColor, .35)
-    };
-  }
-
-  let h = 0;
-
-  for (let i = 0; i < seed.length; i++) {
-
-    h =
-      (h << 5) -
-      h +
-      seed.charCodeAt(i);
-
-    h |= 0;
-  }
-
-  h = Math.abs(h);
-
-  const hue = h % 360;
+    document.getElementById(posId + "_color").value;
 
   return {
-    main: `hsl(${hue},85%,60%)`,
-    glow: `hsla(${hue},85%,60%,.35)`
+    main: customColor,
+    glow: hexToRGBA(customColor, .35)
   };
 }
 
@@ -734,7 +743,7 @@ document.addEventListener(
     renderTimeout =
       setTimeout(() => {
         render();
-      }, 300);
+      }, 100);
 
   }
 );
