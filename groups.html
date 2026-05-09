@@ -1,8 +1,12 @@
-<!-- groups.html -->
+<!-- groups.html COMPLETO -->
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta
 name="viewport"
 content="width=device-width,initial-scale=1.0"
@@ -11,6 +15,7 @@ content="width=device-width,initial-scale=1.0"
 <title>Groups Generator</title>
 
 <link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/mobile.css">
 
 <style>
 
@@ -29,7 +34,6 @@ margin-bottom:14px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-gap:10px;
 }
 
 .group-title{
@@ -109,17 +113,24 @@ margin-top:14px;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="app">
 
-<aside class="sidebar" id="sidebar">
+<aside
+class="sidebar"
+id="sidebar"
+>
 
 <div class="logo">
+
 <h1>ZONE ZERO</h1>
+
 <span>GROUPS</span>
+
 </div>
 
 <button
@@ -141,6 +152,7 @@ onclick="location.href='index.html'"
 <h3>Groups Generator</h3>
 
 <label>Background URL</label>
+
 <input
 id="bgUrl"
 placeholder="Imgur URL"
@@ -148,6 +160,7 @@ value="https://i.imgur.com/Z72kUog.png"
 >
 
 <label>Global Color</label>
+
 <input
 type="color"
 id="globalColor"
@@ -155,46 +168,44 @@ value="#6f8cff"
 >
 
 <div class="check-line">
+
 <input
 type="checkbox"
 id="useGlobalColor"
 checked
 >
-<span>Use same color for all blocks</span>
+
+<span>
+Use same color for all
+</span>
+
 </div>
 
 <div class="check-line">
+
 <input
 type="checkbox"
 id="showBorders"
 checked
 >
-<span>Show borders</span>
+
+<span>
+Show borders
+</span>
+
 </div>
 
-<!-- AÑADE ESTOS INPUTS DENTRO DEL PANEL -->
-<!-- DEBAJO DE Gap Y -->
+<div class="check-line">
 
-<div>
-<label>Gap X</label>
 <input
-type="range"
-id="gapX"
-min="0"
-max="120"
-value="35"
+type="checkbox"
+id="moveAll"
 >
-</div>
 
-<div>
-<label>Gap Y</label>
-<input
-type="range"
-id="gapY"
-min="0"
-max="120"
-value="28"
->
+<span>
+Move all blocks together
+</span>
+
 </div>
 
 <div class="layout-box">
@@ -204,51 +215,33 @@ value="28"
 <div class="layout-grid">
 
 <div>
-<label>Width</label>
-<input
-class="range"
-type="range"
-id="blockWidth"
-min="220"
-max="600"
-value="360"
->
-</div>
 
-<div>
-<label>Height</label>
-<input
-class="range"
-type="range"
-id="blockHeight"
-min="140"
-max="340"
-value="210"
->
-</div>
-
-<div>
 <label>Gap X</label>
+
 <input
 class="range"
 type="range"
 id="gapX"
 min="0"
-max="100"
+max="140"
 value="35"
 >
+
 </div>
 
 <div>
+
 <label>Gap Y</label>
+
 <input
 class="range"
 type="range"
 id="gapY"
 min="0"
-max="100"
+max="140"
 value="28"
 >
+
 </div>
 
 </div>
@@ -271,7 +264,15 @@ Save
 </button>
 
 <button onclick="downloadImage()">
-Photo
+PNG
+</button>
+
+<button onclick="saveTXT()">
+TXT
+</button>
+
+<button onclick="loadTXT()">
+Load
 </button>
 
 <button onclick="toggleLayoutMode()">
@@ -304,18 +305,28 @@ onclick="toggleSidebar()"
 </div>
 
 <section class="editor">
+
 <canvas
 id="canvas"
 width="1600"
 height="900"
 ></canvas>
+
 </section>
 
 </main>
 
 </div>
 
+<input
+type="file"
+id="txtLoader"
+hidden
+accept=".txt,.json"
+>
+
 <script src="js/groups.js"></script>
 
 </body>
+
 </html>
