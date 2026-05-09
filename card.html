@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Zone Zero Media - Player Card</title>
+
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/card.css">
+
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+
+<div class="logo">
+<h1>ZONE ZERO</h1>
+<span>MEDIA</span>
+</div>
+
+<button class="toggle-close" onclick="toggleSidebar()">✕</button>
+
+<a href="index.html" class="back-btn">
+← 5V5 Generator
+</a>
+
+<div class="section">
+
+<h3>Player Card</h3>
+
+<label>Roblox Username</label>
+<input id="username" placeholder="Username">
+
+<label>Player Name</label>
+<input id="playerName" placeholder="Display Name">
+
+<label>Team Color</label>
+<input type="color" id="teamColor" value="#00d9ff">
+
+<label>Background URL</label>
+<input
+id="cardBackground"
+placeholder="Background URL"
+>
+
+<hr>
+
+<label>GENERAL</label>
+<input type="number" id="general" value="90">
+
+<label>DRIBBLING</label>
+<input type="number" id="dribbling" value="90">
+
+<label>PASSING</label>
+<input type="number" id="passing" value="90">
+
+<label>SHOOTING</label>
+<input type="number" id="shooting" value="90">
+
+<label>TEAMWORK</label>
+<input type="number" id="teamwork" value="90">
+
+<label>INDIVIDUAL</label>
+<input type="number" id="individual" value="90">
+
+<label>REACTION</label>
+<input type="number" id="reaction" value="90">
+
+<label>DEFENSE</label>
+<input type="number" id="defense" value="90">
+
+</div>
+
+<div class="actions">
+
+<button onclick="saveLocalCard()">
+Save Local
+</button>
+
+<button onclick="downloadTXTCard()">
+Save TXT
+</button>
+
+<button onclick="loadTXTCard()">
+Load TXT
+</button>
+
+<button onclick="reloadAvatarCard()">
+Reload Avatar
+</button>
+
+<button onclick="downloadImageCard()">
+Save Photo
+</button>
+
+</div>
+
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+
+<button
+class="mobile-open"
+onclick="toggleSidebar()"
+>
+☰
+</button>
+
+<h2>PLAYER CARD</h2>
+
+</div>
+
+<section class="editor">
+
+<canvas
+id="canvas"
+width="700"
+height="1000"
+></canvas>
+
+</section>
+
+</main>
+
+</div>
+
+<input
+type="file"
+id="txtLoader"
+hidden
+accept=".txt,.json"
+>
+
+<script src="js/card.js"></script>
+
+</body>
+</html>
