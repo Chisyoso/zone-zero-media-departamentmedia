@@ -3,7 +3,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
+
 <meta
 name="viewport"
 content="width=device-width, initial-scale=1.0"
@@ -15,34 +17,36 @@ content="width=device-width, initial-scale=1.0"
 
 <style>
 
-.groups-row{
+.groups-panel{
 display:flex;
-gap:10px;
-}
-
-.groups-row input{
-flex:1;
+flex-direction:column;
+gap:14px;
 }
 
 .group-box{
+padding:14px;
+border-radius:16px;
 background:rgba(255,255,255,.04);
 border:1px solid rgba(255,255,255,.06);
-border-radius:16px;
-padding:14px;
 display:flex;
 flex-direction:column;
 gap:10px;
 }
 
 .group-title{
-font-size:14px;
+font-size:15px;
 font-weight:bold;
 letter-spacing:1px;
-opacity:.85;
 }
 
-.layout-box{
-margin-top:18px;
+.team-row{
+display:grid;
+grid-template-columns:1fr 130px;
+gap:8px;
+}
+
+.layout-panel{
+margin-top:10px;
 padding:14px;
 border-radius:16px;
 background:rgba(255,255,255,.04);
@@ -52,18 +56,13 @@ flex-direction:column;
 gap:10px;
 }
 
-.layout-box label{
-font-size:13px;
-opacity:.8;
-}
-
-.layout-buttons{
+.layout-grid{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:10px;
 }
 
-.layout-buttons button{
+.layout-grid button{
 padding:14px;
 border:none;
 border-radius:14px;
@@ -75,6 +74,16 @@ background:linear-gradient(
 color:white;
 font-weight:bold;
 cursor:pointer;
+}
+
+.layout-inputs{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.layout-inputs input{
+width:100%;
 }
 
 </style>
@@ -106,27 +115,26 @@ onclick="location.href='index.html'"
 ← Back
 </button>
 
-<div class="section">
+<div class="section groups-panel">
 
-<h3>Groups Editor</h3>
+<h3>Groups Generator</h3>
 
 <label>Background URL</label>
 
 <input
 id="bg"
-placeholder="https://imgur.com/..."
+placeholder="Imgur URL"
 value="https://i.imgur.com/Z72kUog.png"
 />
 
-<label>Left Text</label>
+<label>Side Text</label>
 
 <input
 id="sideText"
-placeholder="EU"
 value="EU"
 />
 
-<label>Groups Count</label>
+<label>Groups</label>
 
 <input
 id="groupCount"
@@ -148,24 +156,20 @@ value="5"
 
 <div id="groupsContainer"></div>
 
-<div class="layout-box">
+<div class="layout-panel">
 
 <div class="group-title">
 Layout Controls
 </div>
 
-<label>Move Speed</label>
-
-<input
-id="moveSpeed"
-type="number"
-value="8"
-/>
-
-<div class="layout-buttons">
+<div class="layout-grid">
 
 <button onclick="toggleLayout()">
 Toggle Layout
+</button>
+
+<button onclick="resetLayout()">
+Reset Layout
 </button>
 
 <button onclick="addGroup()">
@@ -176,9 +180,51 @@ Add Group
 Remove Group
 </button>
 
-<button onclick="resetLayout()">
-Reset Layout
-</button>
+</div>
+
+<div class="layout-inputs">
+
+<input
+id="boxWidth"
+type="number"
+placeholder="Box Width"
+value="286"
+/>
+
+<input
+id="boxHeight"
+type="number"
+placeholder="Box Height"
+value="274"
+/>
+
+<input
+id="teamHeight"
+type="number"
+placeholder="Team Height"
+value="42"
+/>
+
+<input
+id="gapX"
+type="number"
+placeholder="Gap X"
+value="24"
+/>
+
+<input
+id="gapY"
+type="number"
+placeholder="Gap Y"
+value="28"
+/>
+
+<input
+id="groupsPerRow"
+type="number"
+placeholder="Groups Per Row"
+value="4"
+/>
 
 </div>
 
