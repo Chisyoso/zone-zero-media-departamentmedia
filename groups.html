@@ -1,21 +1,16 @@
-<!-- groups.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-/>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Groups Generator</title>
 
 <link rel="stylesheet" href="css/main.css">
 
 <style>
+.toggle-close{display:block;}
+.mobile-open{display:block;}
+.hidden{display:none;}
 
 .groups-panel{
 display:flex;
@@ -23,7 +18,7 @@ flex-direction:column;
 gap:14px;
 }
 
-.group-box{
+.panel-block{
 padding:14px;
 border-radius:16px;
 background:rgba(255,255,255,.04);
@@ -33,24 +28,57 @@ flex-direction:column;
 gap:10px;
 }
 
-.group-title{
+.panel-title{
 font-size:15px;
-font-weight:bold;
+font-weight:700;
 letter-spacing:1px;
+}
+
+.group-card{
+padding:14px;
+border-radius:16px;
+background:linear-gradient(180deg,rgba(35,35,35,.95),rgba(18,18,18,.95));
+border:1px solid rgba(255,255,255,.06);
+display:flex;
+flex-direction:column;
+gap:10px;
+box-shadow:0 0 20px rgba(0,0,0,.35);
+}
+
+.group-head{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+}
+
+.group-head h4{
+margin:0;
+font-size:18px;
+}
+
+.group-tools{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+}
+
+.group-tools input,
+.group-tools select{
+width:100%;
 }
 
 .team-row{
 display:grid;
-grid-template-columns:1fr 130px;
+grid-template-columns:1fr 120px;
 gap:8px;
 }
 
-.layout-panel{
-margin-top:10px;
-padding:14px;
-border-radius:16px;
-background:rgba(255,255,255,.04);
-border:1px solid rgba(255,255,255,.06);
+.team-row input{
+width:100%;
+}
+
+.layout-tools{
 display:flex;
 flex-direction:column;
 gap:10px;
@@ -66,231 +94,206 @@ gap:10px;
 padding:14px;
 border:none;
 border-radius:14px;
-background:linear-gradient(
-180deg,
-#5f5fff,
-#3a3aff
-);
+background:linear-gradient(180deg,#5f5fff,#3a3aff);
 color:white;
 font-weight:bold;
 cursor:pointer;
 }
 
-.layout-inputs{
+.layout-small-grid{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:10px;
+gap:8px;
 }
 
-.layout-inputs input{
+.layout-small-grid input,
+.layout-small-grid button{
 width:100%;
 }
 
-</style>
+.note{
+font-size:12px;
+opacity:.7;
+line-height:1.45;
+}
 
+input[type="color"]{
+width:100%;
+height:42px;
+border:none;
+border-radius:10px;
+background:none;
+padding:0;
+cursor:pointer;
+}
+
+input[type="checkbox"]{
+width:auto;
+margin-right:8px;
+}
+
+.checkbox-line{
+display:flex;
+align-items:center;
+gap:8px;
+font-size:13px;
+opacity:.9;
+}
+
+.selected-pill{
+font-size:12px;
+opacity:.75;
+padding:6px 10px;
+border-radius:999px;
+background:rgba(255,255,255,.06);
+display:inline-flex;
+align-items:center;
+width:fit-content;
+}
+</style>
 </head>
 
 <body>
-
 <div class="app">
 
 <aside class="sidebar" id="sidebar">
-
 <div class="logo">
 <h1>ZONE ZERO</h1>
 <span>GROUPS</span>
 </div>
 
-<button
-class="toggle-close"
-onclick="toggleSidebar()"
->
-✕
-</button>
+<button class="toggle-close" onclick="toggleSidebar()">✕</button>
 
-<button
-class="back-btn"
-onclick="location.href='index.html'"
->
-← Back
-</button>
+<button class="back-btn" onclick="location.href='index.html'">← Back</button>
 
 <div class="section groups-panel">
-
 <h3>Groups Generator</h3>
 
+<div class="panel-block">
+<div class="panel-title">Global Visuals</div>
+
 <label>Background URL</label>
+<input id="bg" placeholder="Imgur URL" value="https://i.imgur.com/Z72kUog.png">
 
-<input
-id="bg"
-placeholder="Imgur URL"
-value="https://i.imgur.com/Z72kUog.png"
-/>
+<label>Top Title</label>
+<input id="titleText" value="SEASON 0: WORLD ZERO">
 
-<label>Side Text</label>
+<label>Subtitle</label>
+<input id="subtitleText" value="SOCCER ZERO 2026">
 
-<input
-id="sideText"
-value="EU"
-/>
+<label>Left Text</label>
+<input id="sideText" value="EU">
 
-<label>Groups</label>
+<label>Footer Text</label>
+<input id="footerText" value="GROUP STAGE">
 
-<input
-id="groupCount"
-type="number"
-min="1"
-max="20"
-value="8"
-/>
+<label>Main Color</label>
+<input id="globalColor" type="color" value="#65d9ff">
 
-<label>Teams Per Group</label>
-
-<input
-id="teamsPerGroup"
-type="number"
-min="1"
-max="20"
-value="5"
-/>
-
-<div id="groupsContainer"></div>
-
-<div class="layout-panel">
-
-<div class="group-title">
-Layout Controls
+<div class="checkbox-line">
+<input id="useGlobalColor" type="checkbox" checked>
+<label for="useGlobalColor" style="margin:0;">Use global color in all groups</label>
 </div>
+
+<div class="checkbox-line">
+<input id="showGlobalBorders" type="checkbox" checked>
+<label for="showGlobalBorders" style="margin:0;">Show borders globally</label>
+</div>
+
+<div class="layout-small-grid">
+<div>
+<label>Title Size</label>
+<input id="titleSize" type="number" value="52">
+</div>
+<div>
+<label>Subtitle Size</label>
+<input id="subtitleSize" type="number" value="18">
+</div>
+<div>
+<label>Left Text Size</label>
+<input id="sideTextSize" type="number" value="140">
+</div>
+<div>
+<label>Footer Size</label>
+<input id="footerTextSize" type="number" value="18">
+</div>
+</div>
+</div>
+
+<div class="panel-block">
+<div class="panel-title">Board Layout</div>
+
+<div class="layout-small-grid">
+<div>
+<label>Groups</label>
+<input id="groupCount" type="number" min="1" max="20" value="8">
+</div>
+<div>
+<label>Teams / Group</label>
+<input id="teamsPerGroup" type="number" min="1" max="20" value="5">
+</div>
+<div>
+<label>Groups Per Row</label>
+<input id="groupsPerRow" type="number" min="1" max="8" value="4">
+</div>
+<div>
+<label>Move Speed</label>
+<input id="moveSpeed" type="number" min="1" max="20" value="8">
+</div>
+<div>
+<label>Box Width</label>
+<input id="boxWidth" type="number" min="150" max="420" value="286">
+</div>
+<div>
+<label>Box Height</label>
+<input id="boxHeight" type="number" min="120" max="420" value="274">
+</div>
+</div>
+
+<div class="selected-pill" id="selectedLabel">Selected: none</div>
 
 <div class="layout-grid">
-
-<button onclick="toggleLayout()">
-Toggle Layout
-</button>
-
-<button onclick="resetLayout()">
-Reset Layout
-</button>
-
-<button onclick="addGroup()">
-Add Group
-</button>
-
-<button onclick="removeGroup()">
-Remove Group
-</button>
-
+<button onclick="toggleLayout()">Toggle Layout</button>
+<button onclick="resetLayout()">Reset Layout</button>
+<button onclick="scaleSelected(-1)">Scale -</button>
+<button onclick="scaleSelected(1)">Scale +</button>
+<button onclick="resetSelected()">Reset Selected</button>
+<button onclick="applyBoardShift(-20,0)">← Move All</button>
+<button onclick="applyBoardShift(20,0)">Move All →</button>
+<button onclick="applyBoardShift(0,-20)">↑ Move All</button>
+<button onclick="applyBoardShift(0,20)">Move All ↓</button>
+</div>
 </div>
 
-<div class="layout-inputs">
-
-<input
-id="boxWidth"
-type="number"
-placeholder="Box Width"
-value="286"
-/>
-
-<input
-id="boxHeight"
-type="number"
-placeholder="Box Height"
-value="274"
-/>
-
-<input
-id="teamHeight"
-type="number"
-placeholder="Team Height"
-value="42"
-/>
-
-<input
-id="gapX"
-type="number"
-placeholder="Gap X"
-value="24"
-/>
-
-<input
-id="gapY"
-type="number"
-placeholder="Gap Y"
-value="28"
-/>
-
-<input
-id="groupsPerRow"
-type="number"
-placeholder="Groups Per Row"
-value="4"
-/>
-
+<div class="panel-block">
+<div class="panel-title">Groups Editor</div>
+<div id="groupsContainer"></div>
 </div>
-
-</div>
-
 </div>
 
 <div class="actions">
-
-<button onclick="saveLocal()">
-Save Local
-</button>
-
-<button onclick="downloadTXT()">
-Save TXT
-</button>
-
-<button onclick="loadTXT()">
-Load TXT
-</button>
-
-<button onclick="downloadImage()">
-Save Photo
-</button>
-
+<button onclick="saveLocal()">Save Local</button>
+<button onclick="downloadTXT()">Save TXT</button>
+<button onclick="loadTXT()">Load TXT</button>
+<button onclick="downloadImage()">Save Photo</button>
 </div>
-
 </aside>
 
 <main class="main">
-
 <div class="topbar">
-
-<button
-class="mobile-open"
-onclick="toggleSidebar()"
->
-☰
-</button>
-
+<button class="mobile-open" onclick="toggleSidebar()">☰</button>
 <h2>Groups Generator</h2>
-
 </div>
 
 <section class="editor">
-
-<canvas
-id="canvas"
-width="1536"
-height="864"
-></canvas>
-
+<canvas id="canvas" width="1536" height="864"></canvas>
 </section>
-
 </main>
 
 </div>
 
-<input
-type="file"
-id="txtLoader"
-hidden
-accept=".txt,.json"
-/>
+<input type="file" id="txtLoader" hidden accept=".txt,.json">
 
 <script src="js/groups.js"></script>
-
 </body>
 </html>
