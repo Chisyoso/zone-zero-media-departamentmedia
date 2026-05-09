@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zone Zero Media - Groups</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <h1>ZONE ZERO</h1>
+      <span>GROUPS</span>
+    </div>
+
+    <button class="toggle-close" onclick="toggleSidebar()">✕</button>
+
+    <div class="section">
+      <h3>World Groups</h3>
+
+      <label>Background URL</label>
+      <input id="background" placeholder="Imgur or image URL">
+
+      <div class="two-col">
+        <div>
+          <label>Title</label>
+          <input id="title" value="SEASON 0: WORLD ZERO">
+        </div>
+        <div>
+          <label>Subtitle</label>
+          <input id="subtitle" value="SOCCER ZERO 2026">
+        </div>
+      </div>
+
+      <label>Region text</label>
+      <input id="region" value="EU">
+
+      <div class="range-row"><label>Box width</label><input id="boxWidth" type="range" min="180" max="340" value="280"><span id="boxWidthValue">280</span></div>
+      <div class="range-row"><label>Box height</label><input id="boxHeight" type="range" min="150" max="280" value="190"><span id="boxHeightValue">190</span></div>
+      <div class="range-row"><label>Title size</label><input id="titleSize" type="range" min="22" max="56" value="38"><span id="titleSizeValue">38</span></div>
+      <div class="range-row"><label>Region size</label><input id="regionSize" type="range" min="80" max="180" value="130"><span id="regionSizeValue">130</span></div>
+
+      <div id="groupsEditor" class="groups-editor"></div>
+    </div>
+
+    <div class="actions">
+      <button onclick="saveLocal()">Save Local</button>
+      <button onclick="downloadTXT()">Save TXT</button>
+      <button onclick="loadTXT()">Load TXT</button>
+      <button onclick="reloadEmojis()">Reload Emojis</button>
+      <button onclick="downloadPNG()">Save Photo</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="mobile-open" onclick="toggleSidebar()">☰</button>
+      <h2>Groups Board</h2>
+    </div>
+    <section class="editor">
+      <canvas id="canvas" width="1536" height="864"></canvas>
+    </section>
+  </main>
+</div>
+
+<input type="file" id="txtLoader" hidden accept=".txt,.json">
+<script src="js/app.js"></script>
+</body>
+</html>
