@@ -9,7 +9,8 @@ const HEIGHT = 648;
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
 
-const VS_URL = "https://i.imgur.com/DOys6I4.png";
+const VS_URL =
+"https://i.imgur.com/DOys6I4.png";
 
 const avatarCache = {};
 const imageCache = {};
@@ -22,6 +23,8 @@ async function loadImageSafe(url){
 
 try{
 
+if(!url) return null;
+
 if(imageCache[url]){
 return imageCache[url];
 }
@@ -30,20 +33,20 @@ const img = new Image();
 
 img.crossOrigin = "anonymous";
 
-const promise = new Promise((resolve)=>{
+const loaded =
+await new Promise((resolve)=>{
 
 img.onload = ()=> resolve(img);
+
 img.onerror = ()=> resolve(null);
 
 img.src =
 url +
 (url.includes("?") ? "&" : "?") +
-"t=" +
+"_t=" +
 Date.now();
 
 });
-
-const loaded = await promise;
 
 if(loaded){
 imageCache[url] = loaded;
@@ -148,8 +151,7 @@ function paletteFromSeed(seed){
 const h =
 hashString(seed || "?");
 
-const hue1 =
-h % 360;
+const hue1 = h % 360;
 
 const hue2 =
 (hue1 + 35 + (h % 40)) % 360;
@@ -198,7 +200,7 @@ Math.min(r,w/2,h/2);
 
 ctx.beginPath();
 
-ctx.moveTo(x + radius, y);
+ctx.moveTo(x + radius,y);
 
 ctx.arcTo(
 x + w,
@@ -415,10 +417,7 @@ username
 
 const boxW = 360;
 const boxH = 440;
-
-const boxX =
-x - boxW / 2;
-
+const boxX = x - boxW / 2;
 const boxY = 90;
 
 ctx.save();
@@ -750,7 +749,7 @@ collectPVPData()
 )
 );
 
-alert("PVP saved");
+alert("Saved");
 
 }
 
@@ -809,10 +808,9 @@ reader.onload = ()=>{
 
 try{
 
-const data =
-JSON.parse(reader.result);
-
-applyPVPData(data);
+applyPVPData(
+JSON.parse(reader.result)
+);
 
 }catch{
 
@@ -844,9 +842,8 @@ a.click();
 
 async function reloadAvatars(){
 
-for(const key in avatarCache){
-delete avatarCache[key];
-}
+Object.keys(avatarCache)
+.forEach(key=> delete avatarCache[key]);
 
 await renderPVP();
 
@@ -865,7 +862,7 @@ setTimeout(()=>{
 
 renderPVP();
 
-},120);
+},150);
 
 }
 );
