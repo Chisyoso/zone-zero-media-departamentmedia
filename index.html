@@ -1,53 +1,95 @@
+<!-- groups.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zone Zero Media</title>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+/>
+
+<title>Groups Generator</title>
 
 <link rel="stylesheet" href="css/main.css">
-<link rel="stylesheet" href="css/mobile.css">
 
 <style>
 
-.color-label{
-font-size:12px;
-opacity:.7;
-margin-top:8px;
-display:block;
-}
-
-.global-color-box{
-margin-top:12px;
-padding:12px;
-border-radius:14px;
-background:rgba(255,255,255,.04);
-}
-
-.global-color-top{
+.groups-panel{
 display:flex;
-align-items:center;
+flex-direction:column;
+gap:14px;
+}
+
+.group-box{
+padding:14px;
+border-radius:16px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.06);
+display:flex;
+flex-direction:column;
 gap:10px;
+}
+
+.group-title{
+font-size:15px;
+font-weight:bold;
+letter-spacing:1px;
+}
+
+.team-row{
+display:grid;
+grid-template-columns:1fr 130px;
+gap:8px;
+}
+
+.layout-panel{
 margin-top:10px;
+padding:14px;
+border-radius:16px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.06);
+display:flex;
+flex-direction:column;
+gap:10px;
 }
 
-.global-color-top label{
-font-size:13px;
+.layout-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
 }
 
-input[type="color"]{
-width:100%;
-height:42px;
+.layout-grid button{
+padding:14px;
 border:none;
-border-radius:12px;
-background:none;
-padding:0;
+border-radius:14px;
+background:linear-gradient(
+180deg,
+#5f5fff,
+#3a3aff
+);
+color:white;
+font-weight:bold;
 cursor:pointer;
+}
+
+.layout-inputs{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.layout-inputs input{
+width:100%;
 }
 
 </style>
 
 </head>
+
 <body>
 
 <div class="app">
@@ -56,53 +98,158 @@ cursor:pointer;
 
 <div class="logo">
 <h1>ZONE ZERO</h1>
-<span>MEDIA</span>
+<span>GROUPS</span>
 </div>
 
-<button class="toggle-close" onclick="toggleSidebar()">✕</button>
+<button
+class="toggle-close"
+onclick="toggleSidebar()"
+>
+✕
+</button>
 
-<div class="section">
+<button
+class="back-btn"
+onclick="location.href='index.html'"
+>
+← Back
+</button>
 
-<h3>5V5 Generator</h3>
+<div class="section groups-panel">
+
+<h3>Groups Generator</h3>
 
 <label>Background URL</label>
-<input id="stadium" placeholder="Imgur background URL">
-
-<div class="global-color-box">
-
-<label>Global Team Color</label>
-
-<div class="global-color-top">
 
 <input
-type="color"
-id="globalColor"
-value="#00d9ff"
->
+id="bg"
+placeholder="Imgur URL"
+value="https://i.imgur.com/Z72kUog.png"
+/>
 
-<label>
+<label>Side Text</label>
+
 <input
-type="checkbox"
-id="useGlobalColor"
-checked
->
-Use same color for all
-</label>
+id="sideText"
+value="EU"
+/>
+
+<label>Groups</label>
+
+<input
+id="groupCount"
+type="number"
+min="1"
+max="20"
+value="8"
+/>
+
+<label>Teams Per Group</label>
+
+<input
+id="teamsPerGroup"
+type="number"
+min="1"
+max="20"
+value="5"
+/>
+
+<div id="groupsContainer"></div>
+
+<div class="layout-panel">
+
+<div class="group-title">
+Layout Controls
+</div>
+
+<div class="layout-grid">
+
+<button onclick="toggleLayout()">
+Toggle Layout
+</button>
+
+<button onclick="resetLayout()">
+Reset Layout
+</button>
+
+<button onclick="addGroup()">
+Add Group
+</button>
+
+<button onclick="removeGroup()">
+Remove Group
+</button>
+
+</div>
+
+<div class="layout-inputs">
+
+<input
+id="boxWidth"
+type="number"
+placeholder="Box Width"
+value="286"
+/>
+
+<input
+id="boxHeight"
+type="number"
+placeholder="Box Height"
+value="274"
+/>
+
+<input
+id="teamHeight"
+type="number"
+placeholder="Team Height"
+value="42"
+/>
+
+<input
+id="gapX"
+type="number"
+placeholder="Gap X"
+value="24"
+/>
+
+<input
+id="gapY"
+type="number"
+placeholder="Gap Y"
+value="28"
+/>
+
+<input
+id="groupsPerRow"
+type="number"
+placeholder="Groups Per Row"
+value="4"
+/>
 
 </div>
 
 </div>
-
-<div id="players"></div>
 
 </div>
 
 <div class="actions">
-<button onclick="saveLocal()">Save Local</button>
-<button onclick="downloadTXT()">Save TXT</button>
-<button onclick="loadTXT()">Load TXT</button>
-<button onclick="downloadImage()">Save Photo</button>
-<button onclick="reloadAvatars()">Reload Avatars</button>
+
+<button onclick="saveLocal()">
+Save Local
+</button>
+
+<button onclick="downloadTXT()">
+Save TXT
+</button>
+
+<button onclick="loadTXT()">
+Load TXT
+</button>
+
+<button onclick="downloadImage()">
+Save Photo
+</button>
+
 </div>
 
 </aside>
@@ -110,88 +257,40 @@ Use same color for all
 <main class="main">
 
 <div class="topbar">
-<button class="mobile-open" onclick="toggleSidebar()">☰</button>
-<h2>Image Editor</h2>
-</div>
 
-<section class="cards">
-
-<div class="card active">
-<h3>5V5 Formation</h3>
-<p>Main generator ready</p>
-</div>
-
-<a
-href="pvp.html"
-style="
-text-decoration:none;
-color:inherit;
-display:block;
-"
+<button
+class="mobile-open"
+onclick="toggleSidebar()"
 >
+☰
+</button>
 
-<div class="card">
-<h3>Team PVP</h3>
-<p>Versus generator</p>
+<h2>Groups Generator</h2>
+
 </div>
-
-</a>
-
-<a
-href="card.html"
-style="
-text-decoration:none;
-color:inherit;
-display:block;
-"
->
-
-<div class="card">
-<h3>Player Cards</h3>
-<p>Card generator</p>
-</div>
-
-</a>
-
-<a
-href="groups.html"
-style="
-text-decoration:none;
-color:inherit;
-display:block;
-"
->
-
-<div class="card">
-<h3>Team Groups</h3>
-<p>Groups generator</p>
-</div>
-
-</a>
-
-<div class="card disabled">
-<h3>Profile Creator</h3>
-<p>Coming soon</p>
-</div>
-
-<div class="card disabled">
-<h3>Overlay Maker</h3>
-<p>Coming soon</p>
-</div>
-
-</section>
 
 <section class="editor">
-<canvas id="canvas" width="1600" height="1000"></canvas>
+
+<canvas
+id="canvas"
+width="1536"
+height="864"
+></canvas>
+
 </section>
 
 </main>
 
 </div>
 
-<input type="file" id="txtLoader" hidden accept=".txt,.json">
+<input
+type="file"
+id="txtLoader"
+hidden
+accept=".txt,.json"
+/>
 
-<script src="js/app.js"></script>
+<script src="js/groups.js"></script>
 
 </body>
 </html>
