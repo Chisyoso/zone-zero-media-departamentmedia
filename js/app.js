@@ -425,7 +425,25 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function paletteFromSeed(seed, customColor) {
+function getPlayerColor(posId, seed) {
+
+  const useGlobal =
+    document.getElementById("useGlobalColor")?.checked;
+
+  if (useGlobal) {
+
+    const globalColor =
+      document.getElementById("globalColor")?.value ||
+      "#00d9ff";
+
+    return {
+      main: globalColor,
+      glow: hexToRGBA(globalColor, .35)
+    };
+  }
+
+  const customColor =
+    document.getElementById(posId + "_color")?.value;
 
   if (customColor) {
 
@@ -433,7 +451,6 @@ function paletteFromSeed(seed, customColor) {
       main: customColor,
       glow: hexToRGBA(customColor, .35)
     };
-
   }
 
   let h = 0;
@@ -518,15 +535,10 @@ async function render() {
         .value
         .trim();
 
-    const customColor =
-      document
-        .getElementById(pos.id + "_color")
-        .value;
-
     const palette =
-      paletteFromSeed(
-        name + style,
-        customColor
+      getPlayerColor(
+        pos.id,
+        name + style
       );
 
     ctx.save();
@@ -765,6 +777,17 @@ function collectData() {
       document.getElementById(
         "stadium"
       ).value,
+
+    globalColor:
+      document.getElementById(
+        "globalColor"
+      ).value,
+
+    useGlobalColor:
+      document.getElementById(
+        "useGlobalColor"
+      ).checked,
+
     players: []
   };
 
@@ -800,6 +823,16 @@ function applyData(data) {
     "stadium"
   ).value =
     data.stadium || "";
+
+  document.getElementById(
+    "globalColor"
+  ).value =
+    data.globalColor || "#00d9ff";
+
+  document.getElementById(
+    "useGlobalColor"
+  ).checked =
+    data.useGlobalColor !== false;
 
   data.players.forEach(p => {
 
