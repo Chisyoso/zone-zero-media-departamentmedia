@@ -351,7 +351,7 @@ async function getAvatar(
         const url =
           ROBLOX_PROXY +
           encodeURIComponent(
-            `https://thumbnails.roblox.com/v1/users/avatar?userIds=${id}&size=800x800&format=Png&isCircular=false`
+            `https://thumbnails.roblox.com/v1/users/avatar?userIds=${id}&size=720x720&format=Png&isCircular=false`
           );
 
         const res =
