@@ -17,8 +17,7 @@ const avatarCache = new Map();
 const userIdCache = new Map();
 const loadingState = new Map();
 
-const ROBLOX_PROXY =
-"https://corsproxy.io/?";
+const ROBLOX_PROXY = "https://corsproxy.io/?";
 
 function getSaved(type) {
   return JSON.parse(localStorage.getItem(type) || "[]");
@@ -38,10 +37,7 @@ function saveAutocomplete(type, value) {
 
   data = data.slice(0, 5);
 
-  localStorage.setItem(
-    type,
-    JSON.stringify(data)
-  );
+  localStorage.setItem(type, JSON.stringify(data));
 }
 
 function createDatalist(id, items) {
@@ -90,13 +86,11 @@ positions.forEach(pos => {
 
   div.innerHTML = `
 <div class="player-header">
-
 <h4>${pos.id.toUpperCase()}</h4>
 
 <div class="avatar-status" id="${pos.id}_status">
 <span class="status idle"></span>
 </div>
-
 </div>
 
 <input
@@ -109,6 +103,16 @@ id="${pos.id}_name"
 list="stylelist"
 placeholder="Style"
 id="${pos.id}_style"
+>
+
+<label class="color-label">
+Player Color
+</label>
+
+<input
+type="color"
+id="${pos.id}_color"
+value="#00d9ff"
 >
 `;
 
@@ -196,9 +200,7 @@ async function loadImage(src, retries = 5) {
 function setStatus(posId, state) {
 
   const el =
-    document.getElementById(
-      posId + "_status"
-    );
+    document.getElementById(posId + "_status");
 
   if (!el) return;
 
@@ -232,13 +234,11 @@ function setStatus(posId, state) {
 
 async function fetchUserId(username) {
 
-  const clean =
-    username.trim();
+  const clean = username.trim();
 
   if (!clean) return null;
 
-  const key =
-    clean.toLowerCase();
+  const key = clean.toLowerCase();
 
   if (userIdCache.has(key)) {
     return userIdCache.get(key);
@@ -265,20 +265,15 @@ async function fetchUserId(username) {
 
     const json = await res.json();
 
-    const data =
-      json?.data?.[0];
+    const data = json?.data?.[0];
 
     if (!data?.id) {
       return null;
     }
 
-    const id =
-      String(data.id);
+    const id = String(data.id);
 
-    userIdCache.set(
-      key,
-      id
-    );
+    userIdCache.set(key, id);
 
     return id;
 
@@ -291,16 +286,14 @@ async function fetchUserId(username) {
 
 async function fetchAvatar(username, posId) {
 
-  const clean =
-    username.trim();
+  const clean = username.trim();
 
   if (!clean) {
     setStatus(posId, "idle");
     return null;
   }
 
-  const key =
-    clean.toLowerCase();
+  const key = clean.toLowerCase();
 
   if (avatarCache.has(key)) {
 
@@ -319,13 +312,9 @@ async function fetchAvatar(username, posId) {
 
   state.token++;
 
-  loadingState.set(
-    posId,
-    state
-  );
+  loadingState.set(posId, state);
 
-  const token =
-    state.token;
+  const token = state.token;
 
   try {
 
@@ -355,24 +344,21 @@ async function fetchAvatar(username, posId) {
           `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`
         );
 
-      const res =
-        await fetch(url);
+      const res = await fetch(url);
 
-      const json =
-        await res.json();
+      const json = await res.json();
 
-      const item =
-        json?.data?.[0];
+      const item = json?.data?.[0];
 
       if (
         item?.state === "Completed" &&
         item?.imageUrl
       ) {
 
-        imageUrl =
-          item.imageUrl;
+        imageUrl = item.imageUrl;
 
         break;
+
       }
 
       await delay(700);
@@ -393,10 +379,7 @@ async function fetchAvatar(username, posId) {
     }
 
     const img =
-      await loadImage(
-        imageUrl,
-        5
-      );
+      await loadImage(imageUrl, 5);
 
     if (
       loadingState.get(posId)?.token !== token
@@ -411,10 +394,7 @@ async function fetchAvatar(username, posId) {
       return null;
     }
 
-    avatarCache.set(
-      key,
-      img
-    );
+    avatarCache.set(key, img);
 
     setStatus(posId, "success");
 
@@ -429,7 +409,32 @@ async function fetchAvatar(username, posId) {
   }
 }
 
-function paletteFromSeed(seed) {
+function hexToRGBA(hex, alpha) {
+
+  hex = hex.replace("#", "");
+
+  const r =
+    parseInt(hex.substring(0, 2), 16);
+
+  const g =
+    parseInt(hex.substring(2, 4), 16);
+
+  const b =
+    parseInt(hex.substring(4, 6), 16);
+
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function paletteFromSeed(seed, customColor) {
+
+  if (customColor) {
+
+    return {
+      main: customColor,
+      glow: hexToRGBA(customColor, .35)
+    };
+
+  }
 
   let h = 0;
 
@@ -445,8 +450,7 @@ function paletteFromSeed(seed) {
 
   h = Math.abs(h);
 
-  const hue =
-    h % 360;
+  const hue = h % 360;
 
   return {
     main: `hsl(${hue},85%,60%)`,
@@ -514,9 +518,15 @@ async function render() {
         .value
         .trim();
 
+    const customColor =
+      document
+        .getElementById(pos.id + "_color")
+        .value;
+
     const palette =
       paletteFromSeed(
-        name + style
+        name + style,
+        customColor
       );
 
     ctx.save();
@@ -643,8 +653,7 @@ async function render() {
 
     ctx.fill();
 
-    ctx.fillStyle =
-      "white";
+    ctx.fillStyle = "white";
 
     ctx.font =
       "bold 22px Arial";
@@ -708,9 +717,7 @@ document.addEventListener(
   "input",
   () => {
 
-    clearTimeout(
-      renderTimeout
-    );
+    clearTimeout(renderTimeout);
 
     renderTimeout =
       setTimeout(() => {
@@ -765,13 +772,20 @@ function collectData() {
 
     data.players.push({
       id: pos.id,
+
       name:
         document.getElementById(
           pos.id + "_name"
         ).value,
+
       style:
         document.getElementById(
           pos.id + "_style"
+        ).value,
+
+      color:
+        document.getElementById(
+          pos.id + "_color"
         ).value
     });
 
@@ -799,6 +813,11 @@ function applyData(data) {
     ).value =
       p.style || "";
 
+    document.getElementById(
+      p.id + "_color"
+    ).value =
+      p.color || "#00d9ff";
+
   });
 
   render();
@@ -813,9 +832,7 @@ function saveLocal() {
     )
   );
 
-  alert(
-    "Saved locally"
-  );
+  alert("Saved locally");
 }
 
 function downloadTXT() {
