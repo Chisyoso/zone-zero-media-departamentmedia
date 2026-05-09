@@ -4,60 +4,194 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zone Zero Media</title>
+
 <link rel="stylesheet" href="css/main.css">
 <link rel="stylesheet" href="css/mobile.css">
+
+<style>
+
+.color-label{
+font-size:12px;
+opacity:.7;
+margin-top:8px;
+display:block;
+}
+
+.global-color-box{
+margin-top:12px;
+padding:12px;
+border-radius:14px;
+background:rgba(255,255,255,.04);
+}
+
+.global-color-top{
+display:flex;
+align-items:center;
+gap:10px;
+margin-top:10px;
+}
+
+.global-color-top label{
+font-size:13px;
+}
+
+input[type="color"]{
+width:100%;
+height:42px;
+border:none;
+border-radius:12px;
+background:none;
+padding:0;
+cursor:pointer;
+}
+
+</style>
+
 </head>
 <body>
+
 <div class="app">
+
 <aside class="sidebar" id="sidebar">
+
 <div class="logo">
 <h1>ZONE ZERO</h1>
 <span>MEDIA</span>
 </div>
+
 <button class="toggle-close" onclick="toggleSidebar()">✕</button>
-<button class="back-btn">← Index</button>
+
 <div class="section">
+
 <h3>5V5 Generator</h3>
+
 <label>Background URL</label>
 <input id="stadium" placeholder="Imgur background URL">
-<div id="players"></div>
+
+<div class="global-color-box">
+
+<label>Global Team Color</label>
+
+<div class="global-color-top">
+
+<input
+type="color"
+id="globalColor"
+value="#00d9ff"
+>
+
+<label>
+<input
+type="checkbox"
+id="useGlobalColor"
+checked
+>
+Use same color for all
+</label>
+
 </div>
+
+</div>
+
+<div id="players"></div>
+
+</div>
+
 <div class="actions">
 <button onclick="saveLocal()">Save Local</button>
 <button onclick="downloadTXT()">Save TXT</button>
 <button onclick="loadTXT()">Load TXT</button>
 <button onclick="downloadImage()">Save Photo</button>
+<button onclick="reloadAvatars()">Reload Avatars</button>
 </div>
+
 </aside>
+
 <main class="main">
+
 <div class="topbar">
 <button class="mobile-open" onclick="toggleSidebar()">☰</button>
 <h2>Image Editor</h2>
 </div>
+
 <section class="cards">
+
 <div class="card active">
 <h3>5V5 Formation</h3>
 <p>Main generator ready</p>
 </div>
-<div class="card disabled">
-<h3>Player Cards</h3>
-<p>Coming soon</p>
+
+<a
+href="pvp.html"
+style="
+text-decoration:none;
+color:inherit;
+display:block;
+"
+>
+
+<div class="card">
+<h3>Team PVP</h3>
+<p>Versus generator</p>
 </div>
+
+</a>
+
+<a
+href="card.html"
+style="
+text-decoration:none;
+color:inherit;
+display:block;
+"
+>
+
+<div class="card">
+<h3>Player Cards</h3>
+<p>Card generator</p>
+</div>
+
+</a>
+
+<a
+href="groups.html"
+style="
+text-decoration:none;
+color:inherit;
+display:block;
+"
+>
+
+<div class="card">
+<h3>Team Groups</h3>
+<p>Groups generator</p>
+</div>
+
+</a>
+
 <div class="card disabled">
 <h3>Profile Creator</h3>
 <p>Coming soon</p>
 </div>
+
 <div class="card disabled">
 <h3>Overlay Maker</h3>
 <p>Coming soon</p>
 </div>
+
 </section>
+
 <section class="editor">
 <canvas id="canvas" width="1600" height="1000"></canvas>
 </section>
+
 </main>
+
 </div>
+
 <input type="file" id="txtLoader" hidden accept=".txt,.json">
+
 <script src="js/app.js"></script>
+
 </body>
 </html>
