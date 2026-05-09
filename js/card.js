@@ -1,30 +1,31 @@
-const canvas =
-document.getElementById("canvas");
+// js/card.js
 
-const ctx =
-canvas.getContext("2d");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
 const CARD_BG =
 "https://i.imgur.com/9JXUwwa.jpeg";
 
+const avatarCache = new Map();
+const userIdCache = new Map();
+
 const ROBLOX_PROXY =
 "https://corsproxy.io/?";
 
-const avatarCache =
-new Map();
+const CARD = {
+x: 0,
+y: 0,
+w: 750,
+h: 1050
+};
 
-const userIdCache =
-new Map();
-
-function toggleSidebar(){
-
-document
-.getElementById("sidebar")
-.classList.toggle("open");
-
+function qs(id){
+return document.getElementById(id);
 }
 
-function roundedRect(x,y,w,h,r){
+function roundedImage(img,x,y,w,h,r){
+
+ctx.save();
 
 ctx.beginPath();
 
@@ -36,40 +37,37 @@ ctx.quadraticCurveTo(x+w,y,x+w,y+r);
 
 ctx.lineTo(x+w,y+h-r);
 
-ctx.quadraticCurveTo(
-x+w,
-y+h,
-x+w-r,
-y+h
-);
+ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
 
 ctx.lineTo(x+r,y+h);
 
-ctx.quadraticCurveTo(
-x,
-y+h,
-x,
-y+h-r
-);
+ctx.quadraticCurveTo(x,y+h,x,y+h-r);
 
 ctx.lineTo(x,y+r);
 
-ctx.quadraticCurveTo(
-x,
-y,
-x+r,
-y
-);
+ctx.quadraticCurveTo(x,y,x+r,y);
 
 ctx.closePath();
 
+ctx.clip();
+
+ctx.drawImage(img,x,y,w,h);
+
+ctx.restore();
+
 }
 
-async function loadImage(src){
+async function loadImage(src,retries=4){
 
 return new Promise(resolve=>{
 
 if(!src) return resolve(null);
+
+let tries = 0;
+
+function attempt(){
+
+tries++;
 
 const img = new Image();
 
@@ -77,13 +75,30 @@ img.crossOrigin = "anonymous";
 
 img.onload = ()=>resolve(img);
 
-img.onerror = ()=>resolve(null);
+img.onerror = ()=>{
+
+if(tries < retries){
+
+setTimeout(attempt,500);
+
+}else{
+
+resolve(null);
+
+}
+
+};
 
 img.src =
 src +
 (src.includes("?") ? "&" : "?") +
 "t=" +
-Date.now();
+Date.now() +
+tries;
+
+}
+
+attempt();
 
 });
 
@@ -95,9 +110,7 @@ const clean =
 username.trim().toLowerCase();
 
 if(userIdCache.has(clean)){
-
 return userIdCache.get(clean);
-
 }
 
 try{
@@ -119,8 +132,7 @@ excludeBannedUsers:false
 }
 );
 
-const json =
-await res.json();
+const json = await res.json();
 
 const id =
 json?.data?.[0]?.id;
@@ -144,9 +156,7 @@ const clean =
 username.trim().toLowerCase();
 
 if(avatarCache.has(clean)){
-
 return avatarCache.get(clean);
-
 }
 
 const userId =
@@ -154,15 +164,16 @@ await fetchUserId(username);
 
 if(!userId) return null;
 
+try{
+
 const res = await fetch(
 ROBLOX_PROXY +
 encodeURIComponent(
-`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=720x720&format=Png&isCircular=false`
+`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`
 )
 );
 
-const json =
-await res.json();
+const json = await res.json();
 
 const url =
 json?.data?.[0]?.imageUrl;
@@ -178,46 +189,72 @@ avatarCache.set(clean,img);
 
 return img;
 
+}catch{
+
+return null;
+
+}
 }
 
-function drawStat(label,value,x,y,color){
+function discordEmojiToURL(text){
 
-ctx.fillStyle = "white";
+if(!text) return null;
+
+const match =
+text.match(/<?a?:\w+:(\d+)>?/);
+
+if(!match) return null;
+
+const id = match[1];
+
+return `https://cdn.discordapp.com/emojis/${id}.png?size=128&quality=lossless`;
+
+}
+
+function drawText(text,x,y,size,color,align="center"){
 
 ctx.font =
-"bold 28px Arial";
+`bold ${size}px Arial`;
 
-ctx.fillText(label,x,y);
-
-roundedRect(x+170,y-26,240,24,12);
-
-ctx.fillStyle =
-"rgba(255,255,255,.12)";
-
-ctx.fill();
-
-roundedRect(
-x+170,
-y-26,
-value*2.4,
-24,
-12
-);
+ctx.textAlign = align;
 
 ctx.fillStyle = color;
 
-ctx.fill();
+ctx.shadowColor =
+"rgba(0,0,0,.8)";
 
-ctx.fillStyle = "white";
+ctx.shadowBlur = 8;
 
-ctx.font =
-"bold 22px Arial";
+ctx.fillText(text,x,y);
 
-ctx.fillText(value,x+430,y);
+ctx.shadowBlur = 0;
 
 }
 
-async function render(){
+function drawStat(x,title,value,color){
+
+drawText(
+title,
+x,
+880,
+22,
+"rgba(255,255,255,.7)"
+);
+
+drawText(
+value,
+x,
+940,
+64,
+color
+);
+
+}
+
+async function drawBackground(){
+
+const bg =
+await loadImage(CARD_BG);
 
 ctx.clearRect(
 0,
@@ -225,9 +262,6 @@ ctx.clearRect(
 canvas.width,
 canvas.height
 );
-
-const bg =
-await loadImage(CARD_BG);
 
 if(bg){
 
@@ -239,161 +273,232 @@ canvas.width,
 canvas.height
 );
 
+}else{
+
+ctx.fillStyle = "#08111f";
+
+ctx.fillRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
 }
 
+}
+
+async function renderCard(){
+
+await drawBackground();
+
 const username =
-document
-.getElementById("username")
-.value
-.trim();
+qs("card_username").value.trim();
 
 const playerName =
-document
-.getElementById("playerName")
-.value
-.trim() || username;
+qs("card_name").value.trim() ||
+username ||
+"PLAYER";
 
-const color =
-document
-.getElementById("teamColor")
-.value;
+const cardColor =
+qs("card_color").value;
+
+const bgColor =
+qs("card_bg_color").value;
+
+const badge =
+qs("card_badge").value.trim();
+
+ctx.fillStyle =
+bgColor + "88";
+
+ctx.fillRect(
+120,
+560,
+510,
+120
+);
 
 const avatar =
 await fetchAvatar(username);
 
 if(avatar){
 
-ctx.save();
-
-ctx.beginPath();
-
-ctx.arc(
-350,
+roundedImage(
+avatar,
 180,
-95,
-0,
-Math.PI*2
+180,
+390,
+390,
+30
 );
 
-ctx.closePath();
+}
 
-ctx.clip();
+ctx.strokeStyle =
+cardColor;
+
+ctx.lineWidth = 8;
+
+ctx.strokeRect(
+180,
+180,
+390,
+390
+);
+
+const badgeURL =
+discordEmojiToURL(badge);
+
+if(badgeURL){
+
+const badgeImg =
+await loadImage(badgeURL);
+
+if(badgeImg){
 
 ctx.drawImage(
-avatar,
-255,
-85,
-190,
-190
+badgeImg,
+72,
+285,
+72,
+72
 );
-
-ctx.restore();
 
 }
 
-ctx.textAlign = "center";
+}
 
-ctx.fillStyle = "white";
-
-ctx.font =
-"bold 52px Arial";
-
-ctx.fillText(
+drawText(
 playerName,
-350,
-330
+375,
+725,
+52,
+cardColor
 );
 
-ctx.font =
-"bold 70px Arial";
+const stats = [
 
-ctx.fillStyle = color;
+{
+title:"DRI",
+value:qs("dribbling").value || "0"
+},
 
-ctx.fillText(
-document
-.getElementById("general")
-.value,
-350,
-430
-);
+{
+title:"PAS",
+value:qs("passing").value || "0"
+},
 
-ctx.textAlign = "left";
+{
+title:"SHT",
+value:qs("shooting").value || "0"
+},
+
+{
+title:"DEF",
+value:qs("defense").value || "0"
+}
+
+];
+
+const pos = [
+120,
+290,
+460,
+630
+];
+
+stats.forEach((s,i)=>{
 
 drawStat(
-"DRIBBLING",
-+document
-.getElementById("dribbling")
-.value,
-90,
-540,
-color
+pos[i],
+s.title,
+s.value,
+cardColor
 );
 
-drawStat(
-"PASSING",
-+document
-.getElementById("passing")
-.value,
-90,
-610,
-color
+});
+
+drawText(
+"TEAM",
+170,
+1015,
+18,
+"rgba(255,255,255,.5)"
 );
 
-drawStat(
-"SHOOTING",
-+document
-.getElementById("shooting")
-.value,
-90,
-680,
-color
+drawText(
+qs("teamwork").value || "0",
+170,
+1060,
+34,
+"white"
 );
 
-drawStat(
-"TEAMWORK",
-+document
-.getElementById("teamwork")
-.value,
-90,
-750,
-color
+drawText(
+"IND",
+320,
+1015,
+18,
+"rgba(255,255,255,.5)"
 );
 
-drawStat(
-"INDIVIDUAL",
-+document
-.getElementById("individual")
-.value,
-90,
-820,
-color
+drawText(
+qs("individual").value || "0",
+320,
+1060,
+34,
+"white"
 );
 
-drawStat(
-"REACTION",
-+document
-.getElementById("reaction")
-.value,
-90,
-890,
-color
+drawText(
+"REA",
+470,
+1015,
+18,
+"rgba(255,255,255,.5)"
 );
 
-drawStat(
-"DEFENSE",
-+document
-.getElementById("defense")
-.value,
-90,
-960,
-color
+drawText(
+qs("reaction").value || "0",
+470,
+1060,
+34,
+"white"
+);
+
+drawText(
+"GEN",
+620,
+1015,
+18,
+"rgba(255,255,255,.5)"
+);
+
+drawText(
+qs("general").value || "0",
+620,
+1060,
+34,
+"white"
 );
 
 }
+
+let renderTimeout;
 
 document.addEventListener(
 "input",
-()=>render()
+()=>{
+
+clearTimeout(renderTimeout);
+
+renderTimeout =
+setTimeout(()=>{
+renderCard();
+},120);
+
+}
 );
 
 function collectCardData(){
@@ -401,37 +506,43 @@ function collectCardData(){
 return{
 
 username:
-document.getElementById("username").value,
+qs("card_username").value,
 
-playerName:
-document.getElementById("playerName").value,
+name:
+qs("card_name").value,
 
-teamColor:
-document.getElementById("teamColor").value,
+badge:
+qs("card_badge").value,
 
-general:
-document.getElementById("general").value,
+color:
+qs("card_color").value,
+
+bg:
+qs("card_bg_color").value,
 
 dribbling:
-document.getElementById("dribbling").value,
+qs("dribbling").value,
 
 passing:
-document.getElementById("passing").value,
+qs("passing").value,
 
 shooting:
-document.getElementById("shooting").value,
-
-teamwork:
-document.getElementById("teamwork").value,
-
-individual:
-document.getElementById("individual").value,
-
-reaction:
-document.getElementById("reaction").value,
+qs("shooting").value,
 
 defense:
-document.getElementById("defense").value
+qs("defense").value,
+
+teamwork:
+qs("teamwork").value,
+
+individual:
+qs("individual").value,
+
+reaction:
+qs("reaction").value,
+
+general:
+qs("general").value
 
 };
 
@@ -439,20 +550,38 @@ document.getElementById("defense").value
 
 function applyCardData(data){
 
-Object.keys(data).forEach(key=>{
+qs("card_username").value =
+data.username || "";
 
-const el =
-document.getElementById(key);
+qs("card_name").value =
+data.name || "";
 
-if(el){
+qs("card_badge").value =
+data.badge || "";
 
-el.value = data[key];
+qs("card_color").value =
+data.color || "#00d9ff";
 
-}
+qs("card_bg_color").value =
+data.bg || "#001a33";
+
+[
+"dribbling",
+"passing",
+"shooting",
+"defense",
+"teamwork",
+"individual",
+"reaction",
+"general"
+].forEach(v=>{
+
+qs(v).value =
+data[v] || "";
 
 });
 
-render();
+renderCard();
 
 }
 
@@ -465,7 +594,7 @@ collectCardData()
 )
 );
 
-alert("Saved");
+alert("Saved locally");
 
 }
 
@@ -492,7 +621,7 @@ a.href =
 URL.createObjectURL(blob);
 
 a.download =
-"player-card.txt";
+"zzm-card.txt";
 
 a.click();
 
@@ -500,14 +629,11 @@ a.click();
 
 function loadTXTCard(){
 
-document
-.getElementById("txtLoader")
-.click();
+qs("txtLoader").click();
 
 }
 
-document
-.getElementById("txtLoader")
+qs("txtLoader")
 .addEventListener(
 "change",
 e=>{
@@ -522,9 +648,17 @@ new FileReader();
 
 reader.onload = ()=>{
 
+try{
+
 applyCardData(
 JSON.parse(reader.result)
 );
+
+}catch{
+
+alert("Invalid file");
+
+}
 
 };
 
@@ -533,28 +667,28 @@ reader.readAsText(file);
 }
 );
 
-function downloadImageCard(){
+function downloadImage(){
 
 const a =
 document.createElement("a");
 
 a.download =
-"player-card.png";
+"zzm-card.png";
 
 a.href =
-canvas.toDataURL();
+canvas.toDataURL("image/png");
 
 a.click();
 
 }
 
-async function reloadAvatarCard(){
+async function reloadAvatars(){
 
 avatarCache.clear();
 
 userIdCache.clear();
 
-await render();
+await renderCard();
 
 }
 
@@ -565,12 +699,14 @@ localStorage.getItem(
 
 if(local){
 
+try{
+
 applyCardData(
 JSON.parse(local)
 );
 
-}else{
-
-render();
+}catch{}
 
 }
+
+renderCard();
