@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zone Zero Media</title>
+
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+
+<div class="logo">
+<h1>ZONE ZERO</h1>
+<span>MEDIA</span>
+</div>
+
+<button class="toggle-close" onclick="toggleSidebar()">✕</button>
+
+<div class="section">
+
+<h3>5V5 Generator</h3>
+
+<label>Background URL</label>
+<input id="stadium" placeholder="Imgur background URL">
+
+<div id="players"></div>
+
+</div>
+
+<div class="actions">
+<button onclick="saveLocal()">Save Local</button>
+<button onclick="downloadTXT()">Save TXT</button>
+<button onclick="loadTXT()">Load TXT</button>
+<button onclick="downloadImage()">Save Photo</button>
+<button onclick="reloadAvatars()">Reload Avatars</button>
+</div>
+
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+<button class="mobile-open" onclick="toggleSidebar()">☰</button>
+<h2>Image Editor</h2>
+</div>
+
+<section class="cards">
+
+<div class="card active">
+<h3>5V5 Formation</h3>
+<p>Main generator ready</p>
+</div>
+
+<a
+href="pvp.html"
+style="
+text-decoration:none;
+color:inherit;
+display:block;
+"
+>
+
+<div class="card">
+
+<h3>Team PVP</h3>
+<p>Versus generator</p>
+
+</div>
+
+</a>
+
+<div class="card disabled">
+<h3>Player Cards</h3>
+<p>Coming soon</p>
+</div>
+
+<div class="card disabled">
+<h3>Profile Creator</h3>
+<p>Coming soon</p>
+</div>
+
+<div class="card disabled">
+<h3>Overlay Maker</h3>
+<p>Coming soon</p>
+</div>
+
+</section>
+
+<section class="editor">
+<canvas id="canvas" width="1600" height="1000"></canvas>
+</section>
+
+</main>
+
+</div>
+
+<input type="file" id="txtLoader" hidden accept=".txt,.json">
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
