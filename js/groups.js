@@ -1,3 +1,5 @@
+// js/groups.js
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -7,751 +9,442 @@ canvas.height = 864;
 ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
-const DEFAULT_BG = "https://i.imgur.com/Z72kUog.png";
-const ROBLOX_PROXY = "https://corsproxy.io/?";
-
 const $ = id => document.getElementById(id);
+
+const ROBLOX_PROXY =
+"https://corsproxy.io/?";
 
 const imageCache = new Map();
 
+const sidebar = $("sidebar");
+
+let sidebarOpen = false;
+
 let layoutMode = false;
-let dragTarget = null;
 
-const layout = JSON.parse(
-  localStorage.getItem("zzm_groups_layout")
-) || {
+let drag = null;
 
-  board:{
-    x:0,
-    y:0
-  },
-
-  box:{
-    width:280,
-    height:190,
-    gapX:18,
-    gapY:22
-  },
-
-  slots:{
-    height:32
-  }
-
+const defaultLayout = {
+x: 294,
+y: 116,
+gapX: 24,
+gapY: 28,
+boxWidth: 286,
+boxHeight: 274,
+teamHeight: 42,
+groupsPerRow: 4
 };
 
-const state = JSON.parse(
-  localStorage.getItem("zzm_groups_data")
-) || {
+let layout =
+JSON.parse(
+localStorage.getItem(
+"zzm_groups_layout"
+)
+) || structuredClone(defaultLayout);
 
-  background:DEFAULT_BG,
-
-  title:"SEASON 0: WORLD ZERO",
-
-  subtitle:"SOCCER ZERO 2026",
-
-  region:"EU",
-
-  groups:[
-    createGroup("A"),
-    createGroup("B"),
-    createGroup("C"),
-    createGroup("D"),
-    createGroup("E"),
-    createGroup("F"),
-    createGroup("G"),
-    createGroup("H")
-  ]
-};
-
-function createGroup(letter){
-
-  return {
-
-    letter,
-
-    enabled:true,
-
-    teams:[
-      createTeam(),
-      createTeam(),
-      createTeam(),
-      createTeam()
-    ]
-  };
-}
-
-function createTeam(){
-
-  return {
-
-    name:"",
-    emoji:""
-
-  };
-}
-
-function saveData(){
-
-  localStorage.setItem(
-    "zzm_groups_data",
-    JSON.stringify(state)
-  );
-
-  localStorage.setItem(
-    "zzm_groups_layout",
-    JSON.stringify(layout)
-  );
+function saveLayout(){
+localStorage.setItem(
+"zzm_groups_layout",
+JSON.stringify(layout)
+);
 }
 
 function toggleSidebar(){
 
-  const sidebar = $("sidebar");
+sidebarOpen = !sidebarOpen;
 
-  sidebar.classList.toggle("open");
+if(window.innerWidth <= 900){
+
+sidebar.style.transform =
+sidebarOpen
+? "translateX(0)"
+: "translateX(-100%)";
+
+}
+
+}
+
+function toggleLayout(){
+
+layoutMode = !layoutMode;
+
+render();
+
+}
+
+function resetLayout(){
+
+layout =
+structuredClone(defaultLayout);
+
+saveLayout();
+
+render();
+
+}
+
+function addGroup(){
+
+const value =
+parseInt($("groupCount").value || 8);
+
+$("groupCount").value =
+value + 1;
+
+generateInputs();
+
+render();
+
+}
+
+function removeGroup(){
+
+const value =
+parseInt($("groupCount").value || 8);
+
+$("groupCount").value =
+Math.max(1,value - 1);
+
+generateInputs();
+
+render();
+
+}
+
+async function loadImage(src){
+
+return new Promise(resolve=>{
+
+if(!src)
+return resolve(null);
+
+if(imageCache.has(src))
+return resolve(
+imageCache.get(src)
+);
+
+const img = new Image();
+
+img.crossOrigin = "anonymous";
+
+img.onload = ()=>{
+
+imageCache.set(src,img);
+
+resolve(img);
+
+};
+
+img.onerror = ()=>resolve(null);
+
+img.src =
+src +
+(src.includes("?") ? "&":"?")
++ "t=" + Date.now();
+
+});
+
 }
 
 function emojiURL(text){
 
-  const match =
-  String(text || "")
-  .match(/<?a?:\w+:(\d+)>?/);
+const match =
+String(text || "")
+.match(/<?a?:\w+:(\d+)>?/);
 
-  if(!match) return null;
+if(!match)
+return null;
 
-  return `https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
-}
+return
+`https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
 
-async function loadImage(src,retries=4){
-
-  return new Promise(resolve=>{
-
-    if(!src) return resolve(null);
-
-    if(imageCache.has(src)){
-
-      return resolve(imageCache.get(src));
-    }
-
-    let tries = 0;
-
-    const attempt = ()=>{
-
-      tries++;
-
-      const img = new Image();
-
-      img.crossOrigin = "anonymous";
-
-      img.onload = ()=>{
-
-        imageCache.set(src,img);
-
-        resolve(img);
-      };
-
-      img.onerror = ()=>{
-
-        if(tries < retries){
-
-          setTimeout(attempt,500);
-
-        }else{
-
-          resolve(null);
-        }
-      };
-
-      img.src =
-      src +
-      (src.includes("?") ? "&":"?") +
-      "t=" +
-      Date.now();
-    };
-
-    attempt();
-  });
 }
 
 function roundedRect(x,y,w,h,r){
 
-  ctx.beginPath();
+ctx.beginPath();
 
-  ctx.moveTo(x+r,y);
+ctx.moveTo(x+r,y);
 
-  ctx.lineTo(x+w-r,y);
+ctx.lineTo(x+w-r,y);
 
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ctx.quadraticCurveTo(
+x+w,
+y,
+x+w,
+y+r
+);
 
-  ctx.lineTo(x+w,y+h-r);
+ctx.lineTo(x+w,y+h-r);
 
-  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ctx.quadraticCurveTo(
+x+w,
+y+h,
+x+w-r,
+y+h
+);
 
-  ctx.lineTo(x+r,y+h);
+ctx.lineTo(x+r,y+h);
 
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ctx.quadraticCurveTo(
+x,
+y+h,
+x,
+y+h-r
+);
 
-  ctx.lineTo(x,y+r);
+ctx.lineTo(x,y+r);
 
-  ctx.quadraticCurveTo(x,y,x+r,y);
+ctx.quadraticCurveTo(
+x,
+y,
+x+r,
+y
+);
 
-  ctx.closePath();
+ctx.closePath();
+
 }
 
-function drawText(
-  text,
-  x,
-  y,
-  size,
-  color="white",
-  align="center"
-){
+function generateInputs(){
 
-  ctx.save();
+const container =
+$("groupsContainer");
 
-  ctx.font = `bold ${size}px Arial`;
+container.innerHTML = "";
 
-  ctx.fillStyle = color;
+const groups =
+parseInt(
+$("groupCount").value || 8
+);
 
-  ctx.textAlign = align;
+const teams =
+parseInt(
+$("teamsPerGroup").value || 5
+);
 
-  ctx.textBaseline = "middle";
+for(let g=0; g<groups; g++){
 
-  ctx.lineWidth = 6;
+const div =
+document.createElement("div");
 
-  ctx.strokeStyle = "rgba(0,0,0,.8)";
+div.className =
+"group-box";
 
-  ctx.strokeText(text,x,y);
+let html = `
+<div class="group-title">
+GROUP ${String.fromCharCode(65+g)}
+</div>
+`;
 
-  ctx.fillText(text,x,y);
+for(let t=0; t<teams; t++){
 
-  ctx.restore();
+html += `
+<div class="groups-row">
+
+<input
+id="g${g}_team${t}"
+placeholder="Team Name"
+/>
+
+<input
+id="g${g}_emoji${t}"
+placeholder="<:emoji:id>"
+/>
+
+</div>
+`;
+
 }
 
-function injectControls(){
+div.innerHTML = html;
 
-  if($("groupControls")) return;
+container.appendChild(div);
 
-  const section =
-  document.querySelector(".section");
-
-  const div =
-  document.createElement("div");
-
-  div.id = "groupControls";
-
-  div.innerHTML = `
-
-  <div class="global-color-box">
-
-  <h3>Groups Editor</h3>
-
-  <label>Background URL</label>
-  <input id="backgroundInput">
-
-  <label>Box Width</label>
-  <input type="range" id="boxWidth" min="180" max="420">
-
-  <label>Box Height</label>
-  <input type="range" id="boxHeight" min="120" max="300">
-
-  <label>Gap X</label>
-  <input type="range" id="gapX" min="0" max="60">
-
-  <label>Gap Y</label>
-  <input type="range" id="gapY" min="0" max="60">
-
-  <label>Slot Height</label>
-  <input type="range" id="slotHeight" min="22" max="70">
-
-  <button id="layoutBtn">
-  Toggle Layout Mode
-  </button>
-
-  <button id="addGroupBtn">
-  Add Group
-  </button>
-
-  <button id="removeGroupBtn">
-  Remove Group
-  </button>
-
-  <div id="groupsInputs"></div>
-
-  </div>
-  `;
-
-  section.appendChild(div);
-
-  $("backgroundInput").value =
-  state.background;
-
-  $("boxWidth").value =
-  layout.box.width;
-
-  $("boxHeight").value =
-  layout.box.height;
-
-  $("gapX").value =
-  layout.box.gapX;
-
-  $("gapY").value =
-  layout.box.gapY;
-
-  $("slotHeight").value =
-  layout.slots.height;
-
-  $("backgroundInput")
-  .addEventListener("input",e=>{
-
-    state.background = e.target.value;
-
-    render();
-  });
-
-  $("boxWidth")
-  .addEventListener("input",e=>{
-
-    layout.box.width =
-    Number(e.target.value);
-
-    render();
-  });
-
-  $("boxHeight")
-  .addEventListener("input",e=>{
-
-    layout.box.height =
-    Number(e.target.value);
-
-    render();
-  });
-
-  $("gapX")
-  .addEventListener("input",e=>{
-
-    layout.box.gapX =
-    Number(e.target.value);
-
-    render();
-  });
-
-  $("gapY")
-  .addEventListener("input",e=>{
-
-    layout.box.gapY =
-    Number(e.target.value);
-
-    render();
-  });
-
-  $("slotHeight")
-  .addEventListener("input",e=>{
-
-    layout.slots.height =
-    Number(e.target.value);
-
-    render();
-  });
-
-  $("layoutBtn")
-  .addEventListener("click",()=>{
-
-    layoutMode = !layoutMode;
-
-    render();
-  });
-
-  $("addGroupBtn")
-  .addEventListener("click",()=>{
-
-    const letter =
-    String.fromCharCode(
-      65 + state.groups.length
-    );
-
-    state.groups.push(
-      createGroup(letter)
-    );
-
-    refreshInputs();
-
-    render();
-  });
-
-  $("removeGroupBtn")
-  .addEventListener("click",()=>{
-
-    if(state.groups.length <= 1)
-    return;
-
-    state.groups.pop();
-
-    refreshInputs();
-
-    render();
-  });
-
-  refreshInputs();
 }
 
-function refreshInputs(){
+}
 
-  const container =
-  $("groupsInputs");
+async function drawBackground(){
 
-  container.innerHTML = "";
+const bg =
+await loadImage(
+$("bg").value.trim()
+);
 
-  state.groups.forEach((group,g)=>{
+if(bg){
 
-    const div =
-    document.createElement("div");
+ctx.drawImage(
+bg,
+0,
+0,
+canvas.width,
+canvas.height
+);
 
-    div.style.marginTop = "16px";
+}else{
 
-    div.innerHTML = `
+ctx.fillStyle = "#050816";
 
-    <h4>
-    GROUP ${group.letter}
-    </h4>
+ctx.fillRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
 
-    ${
-      group.teams
-      .map((team,t)=>`
+}
 
-      <input
-      placeholder="Team"
-      data-g="${g}"
-      data-t="${t}"
-      data-k="name"
-      value="${team.name}"
-      >
-
-      <input
-      placeholder="<:emoji:id>"
-      data-g="${g}"
-      data-t="${t}"
-      data-k="emoji"
-      value="${team.emoji}"
-      >
-
-      `)
-      .join("")
-    }
-    `;
-
-    container.appendChild(div);
-  });
-
-  container
-  .querySelectorAll("input")
-  .forEach(input=>{
-
-    input.addEventListener("input",()=>{
-
-      const g =
-      Number(input.dataset.g);
-
-      const t =
-      Number(input.dataset.t);
-
-      const k =
-      input.dataset.k;
-
-      state.groups[g]
-      .teams[t][k] =
-      input.value;
-
-      render();
-    });
-  });
 }
 
 async function render(){
 
-  saveData();
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
 
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+await drawBackground();
 
-  const bg =
-  await loadImage(
-    state.background ||
-    DEFAULT_BG
-  );
+ctx.textAlign = "left";
 
-  if(bg){
+ctx.fillStyle = "white";
 
-    ctx.drawImage(
-      bg,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+ctx.font =
+"bold 150px Arial";
 
-  }else{
+ctx.fillText(
+$("sideText").value || "EU",
+66,
+458
+);
 
-    ctx.fillStyle = "#000";
+const groups =
+parseInt(
+$("groupCount").value || 8
+);
 
-    ctx.fillRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-  }
+const teams =
+parseInt(
+$("teamsPerGroup").value || 5
+);
 
-  drawText(
-    state.title,
-    768,
-    40,
-    48
-  );
+for(let i=0; i<groups; i++){
 
-  drawText(
-    state.subtitle,
-    768,
-    90,
-    18,
-    "#9fd6ff"
-  );
+const row =
+Math.floor(
+i / layout.groupsPerRow
+);
 
-  drawText(
-    state.region,
-    130,
-    430,
-    140
-  );
+const col =
+i % layout.groupsPerRow;
 
-  const startX =
-  300 + layout.board.x;
+const x =
+layout.x +
+col *
+(layout.boxWidth + layout.gapX);
 
-  const startY =
-  110 + layout.board.y;
+const y =
+layout.y +
+row *
+(layout.boxHeight + layout.gapY);
 
-  const boxW =
-  layout.box.width;
+drawGroupBox(
+x,
+y,
+i,
+teams
+);
 
-  const boxH =
-  layout.box.height;
-
-  const gapX =
-  layout.box.gapX;
-
-  const gapY =
-  layout.box.gapY;
-
-  state.groups.forEach((group,i)=>{
-
-    const col = i % 4;
-    const row = Math.floor(i/4);
-
-    const x =
-    startX +
-    (boxW + gapX) * col;
-
-    const y =
-    startY +
-    (boxH + gapY) * row;
-
-    const accent =
-    i % 2
-    ? "#5fd2ff"
-    : "#cf66ff";
-
-    ctx.save();
-
-    ctx.shadowColor =
-    accent;
-
-    ctx.shadowBlur = 25;
-
-    roundedRect(
-      x,
-      y,
-      boxW,
-      boxH,
-      10
-    );
-
-    ctx.fillStyle =
-    "rgba(0,0,0,.35)";
-
-    ctx.fill();
-
-    ctx.lineWidth = 2;
-
-    ctx.strokeStyle =
-    accent;
-
-    ctx.stroke();
-
-    ctx.restore();
-
-    roundedRect(
-      x,
-      y,
-      boxW,
-      34,
-      8
-    );
-
-    ctx.fillStyle =
-    accent;
-
-    ctx.fill();
-
-    drawText(
-      `GROUP ${group.letter}`,
-      x + boxW/2,
-      y + 18,
-      18
-    );
-
-    group.teams.forEach(async(team,t)=>{
-
-      const slotY =
-      y + 44 +
-      t *
-      layout.slots.height;
-
-      roundedRect(
-        x + 10,
-        slotY,
-        boxW - 20,
-        layout.slots.height - 6,
-        5
-      );
-
-      ctx.fillStyle =
-      "rgba(0,0,0,.45)";
-
-      ctx.fill();
-
-      ctx.strokeStyle =
-      "rgba(255,255,255,.08)";
-
-      ctx.stroke();
-
-      drawText(
-        team.name || `TEAM ${t+1}`,
-        x + 18,
-        slotY +
-        layout.slots.height/2 - 2,
-        16,
-        "white",
-        "left"
-      );
-
-      const emoji =
-      emojiURL(team.emoji);
-
-      if(emoji){
-
-        const img =
-        await loadImage(emoji);
-
-        if(img){
-
-          ctx.drawImage(
-            img,
-            x + boxW - 46,
-            slotY + 2,
-            24,
-            24
-          );
-        }
-      }
-    });
-
-    if(layoutMode){
-
-      ctx.beginPath();
-
-      ctx.arc(
-        x + boxW/2,
-        y - 15,
-        18,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fillStyle =
-      accent;
-
-      ctx.fill();
-    }
-  });
 }
 
-canvas.addEventListener(
-  "pointerdown",
-  e=>{
+if(layoutMode){
 
-    if(!layoutMode) return;
+ctx.strokeStyle =
+"#00d9ff";
 
-    const rect =
-    canvas.getBoundingClientRect();
+ctx.lineWidth = 3;
 
-    const x =
-    (e.clientX - rect.left) *
-    (canvas.width / rect.width);
-
-    const y =
-    (e.clientY - rect.top) *
-    (canvas.height / rect.height);
-
-    dragTarget = {
-
-      startX:x,
-      startY:y,
-      origX:layout.board.x,
-      origY:layout.board.y
-    };
-  }
+ctx.strokeRect(
+layout.x - 8,
+layout.y - 8,
+layout.boxWidth *
+layout.groupsPerRow +
+layout.gapX *
+(layout.groupsPerRow - 1)
++ 16,
+(
+Math.ceil(
+groups /
+layout.groupsPerRow
+)
+*
+(layout.boxHeight + layout.gapY)
+)
+- layout.gapY
++ 16
 );
 
-canvas.addEventListener(
-  "pointermove",
-  e=>{
+}
 
-    if(!dragTarget) return;
+}
 
-    const rect =
-    canvas.getBoundingClientRect();
+async function drawGroupBox(
+x,
+y,
+groupIndex,
+teams
+){
 
-    const x =
-    (e.clientX - rect.left) *
-    (canvas.width / rect.width);
-
-    const y =
-    (e.clientY - rect.top) *
-    (canvas.height / rect.height);
-
-    layout.board.x =
-    dragTarget.origX +
-    (x - dragTarget.startX);
-
-    layout.board.y =
-    dragTarget.origY +
-    (y - dragTarget.startY);
-
-    render();
-  }
+roundedRect(
+x,
+y,
+layout.boxWidth,
+layout.boxHeight,
+0
 );
 
-canvas.addEventListener(
-  "pointerup",
-  ()=>{
+ctx.fillStyle =
+"rgba(0,0,0,.45)";
 
-    dragTarget = null;
-  }
+ctx.fill();
+
+ctx.lineWidth = 3;
+
+ctx.strokeStyle =
+groupIndex % 2
+? "#db6dff"
+: "#6dd6ff";
+
+ctx.stroke();
+
+ctx.fillStyle = "white";
+
+ctx.font =
+"bold 28px Arial";
+
+ctx.textAlign = "center";
+
+ctx.fillText(
+`GROUP ${
+String.fromCharCode(
+65 + groupIndex
+)
+}`,
+x + layout.boxWidth/2,
+y + 32
 );
 
-injectControls();
+for(let i=0; i<teams; i++){
 
-render();
+const rowY =
+y + 58 +
+i *
+(layout.teamHeight + 8);
+
+roundedRect(
+x + 14,
+rowY,
+layout
