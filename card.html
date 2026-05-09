@@ -1,246 +1,175 @@
 <!-- card.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zone Zero Media - Card Creator</title>
 
 <link rel="stylesheet" href="css/main.css">
 <link rel="stylesheet" href="css/mobile.css">
 
 <style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #050816; }
+  .app { min-height: 100vh; display: flex; }
 
-.card-grid{
-display:grid;
-gap:12px;
-}
+  .sidebar{
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 100vh;
+    overflow-y: auto;
+    background: rgba(7, 12, 24, .98);
+    border-right: 1px solid rgba(255,255,255,.08);
+    z-index: 20;
+    transform: translateX(0);
+    transition: transform .25s ease;
+  }
 
-.card-grid input{
-width:100%;
-}
+  .main{
+    margin-left: 340px;
+    min-height: 100vh;
+    width: calc(100% - 340px);
+  }
 
-.stats-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-top:10px;
-}
+  .editor{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: calc(100vh - 70px);
+  }
 
-.stats-grid div{
-background:rgba(255,255,255,.04);
-padding:10px;
-border-radius:12px;
-}
+  #canvas{
+    width: min(580px, 100%);
+    height: auto;
+    aspect-ratio: 580 / 746;
+    background: #000;
+    border-radius: 18px;
+    display: block;
+  }
 
-.stats-grid label{
-font-size:12px;
-opacity:.7;
-display:block;
-margin-bottom:5px;
-}
+  .card-grid{
+    display: grid;
+    gap: 10px;
+  }
 
-input[type="color"]{
-width:100%;
-height:42px;
-border:none;
-border-radius:12px;
-background:none;
-padding:0;
-cursor:pointer;
-}
+  .stats-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
 
-#canvas{
-width:580px;
-height:746px;
-max-width:100%;
-background:#000;
-border-radius:18px;
-}
+  .stats-grid div{
+    background: rgba(255,255,255,.04);
+    padding: 10px;
+    border-radius: 12px;
+  }
 
+  .stats-grid label{
+    font-size: 12px;
+    opacity: .72;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  input[type="color"]{
+    width: 100%;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  @media (max-width: 900px){
+    .sidebar{
+      transform: translateX(-100%);
+      width: min(340px, 88vw);
+    }
+    .main{
+      margin-left: 0;
+      width: 100%;
+    }
+    .sidebar.open{
+      transform: translateX(0);
+    }
+  }
 </style>
-
 </head>
 <body>
 
 <div class="app">
 
 <aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <h1>ZONE ZERO</h1>
+    <span>MEDIA</span>
+  </div>
 
-<div class="logo">
-<h1>ZONE ZERO</h1>
-<span>MEDIA</span>
-</div>
+  <button class="toggle-close" onclick="toggleSidebar()">✕</button>
 
-<button
-class="toggle-close"
-onclick="toggleSidebar()"
->
-✕
-</button>
+  <a href="index.html" class="back-btn">← Back</a>
 
-<a
-href="index.html"
-class="back-btn"
->
-← Back
-</a>
+  <div class="section">
+    <h3>Player Card</h3>
 
-<div class="section">
+    <div class="card-grid">
+      <label>Username</label>
+      <input id="card_username" placeholder="Roblox username">
 
-<h3>Player Card</h3>
+      <label>Display Name</label>
+      <input id="card_name" placeholder="Player name">
 
-<div class="card-grid">
+      <label>Discord Emoji</label>
+      <input id="card_badge" placeholder="<:MEDIAZZ:1501791652354719925>">
 
-<label>Username</label>
-<input
-id="card_username"
-placeholder="Roblox username"
->
+      <label>Main Color</label>
+      <input type="color" id="card_color" value="#00d9ff">
 
-<label>Display Name</label>
-<input
-id="card_name"
-placeholder="Player name"
->
+      <label>Background Color</label>
+      <input type="color" id="card_bg_color" value="#00162d">
+    </div>
 
-<label>Discord Emoji</label>
-<input
-id="card_badge"
-placeholder="<:MEDIAZZ:1501791652354719925>"
->
+    <div class="stats-grid">
+      <div><label>DRI</label><input id="dribbling" placeholder="99"></div>
+      <div><label>PAS</label><input id="passing" placeholder="99"></div>
+      <div><label>SHT</label><input id="shooting" placeholder="99"></div>
+      <div><label>DEF</label><input id="defense" placeholder="99"></div>
+      <div><label>TMW</label><input id="teamwork" placeholder="99"></div>
+      <div><label>IND</label><input id="individual" placeholder="99"></div>
+      <div><label>REA</label><input id="reaction" placeholder="99"></div>
+      <div><label>GEN</label><input id="general" placeholder="99"></div>
+    </div>
+  </div>
 
-<label>Main Color</label>
-<input
-type="color"
-id="card_color"
-value="#00d9ff"
->
-
-<label>Bottom Background</label>
-<input
-type="color"
-id="card_bg_color"
-value="#00162d"
->
-
-</div>
-
-<div class="stats-grid">
-
-<div>
-<label>DRI</label>
-<input id="dribbling" placeholder="99">
-</div>
-
-<div>
-<label>PAS</label>
-<input id="passing" placeholder="99">
-</div>
-
-<div>
-<label>SHT</label>
-<input id="shooting" placeholder="99">
-</div>
-
-<div>
-<label>DEF</label>
-<input id="defense" placeholder="99">
-</div>
-
-<div>
-<label>TMW</label>
-<input id="teamwork" placeholder="99">
-</div>
-
-<div>
-<label>IND</label>
-<input id="individual" placeholder="99">
-</div>
-
-<div>
-<label>REA</label>
-<input id="reaction" placeholder="99">
-</div>
-
-<div>
-<label>GEN</label>
-<input id="general" placeholder="99">
-</div>
-
-</div>
-
-</div>
-
-<div class="actions">
-
-<button onclick="saveLocalCard()">
-Save Local
-</button>
-
-<button onclick="downloadTXTCard()">
-Save TXT
-</button>
-
-<button onclick="loadTXTCard()">
-Load TXT
-</button>
-
-<button onclick="reloadAvatars()">
-Reload Avatar
-</button>
-
-<button onclick="downloadImage()">
-Save Photo
-</button>
-
-</div>
-
+  <div class="actions">
+    <button onclick="saveLocalCard()">Save Local</button>
+    <button onclick="downloadTXTCard()">Save TXT</button>
+    <button onclick="loadTXTCard()">Load TXT</button>
+    <button onclick="reloadAvatars()">Reload Avatar</button>
+    <button onclick="downloadImage()">Save Photo</button>
+  </div>
 </aside>
 
 <main class="main">
+  <div class="topbar">
+    <button class="mobile-open" onclick="toggleSidebar()">☰</button>
+    <h2>Card Creator</h2>
+  </div>
 
-<div class="topbar">
-
-<button
-class="mobile-open"
-onclick="toggleSidebar()"
->
-☰
-</button>
-
-<h2>Card Creator</h2>
-
-</div>
-
-<section class="editor">
-
-<canvas
-id="canvas"
-width="580"
-height="746"
-></canvas>
-
-</section>
-
+  <section class="editor">
+    <canvas id="canvas" width="580" height="746"></canvas>
+  </section>
 </main>
 
 </div>
 
-<input
-type="file"
-id="txtLoader"
-hidden
-accept=".txt,.json"
->
-
+<input type="file" id="txtLoader" hidden accept=".txt,.json">
 <script src="js/card.js"></script>
-
 </body>
 </html>
