@@ -3,81 +3,62 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const WIDTH = canvas.width;
-const HEIGHT = canvas.height;
+const WIDTH = 1152;
+const HEIGHT = 648;
 
-const avatarCache = new Map();
-const thumbCache = new Map();
-const userCache = new Map();
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
 
-const VS_IMAGE =
-"https://i.imgur.com/DOys6I4.png";
+const VS_URL = "https://i.imgur.com/DOys6I4.png";
 
-function delay(ms){
-return new Promise(r=>setTimeout(r,ms));
+const avatarCache = {};
+const imageCache = {};
+
+function safe(v){
+return decodeURIComponent(v || "");
 }
 
-function setStatus(side,state){
+async function loadImageSafe(url){
 
-const el =
-document.getElementById(side+"_status");
+try{
 
-if(!el) return;
-
-if(state==="loading"){
-el.innerHTML =
-`<span class="status loading"></span>`;
-return;
+if(imageCache[url]){
+return imageCache[url];
 }
-
-if(state==="success"){
-el.innerHTML =
-`<span class="status success">✓</span>`;
-return;
-}
-
-if(state==="error"){
-el.innerHTML =
-`<span class="status error">!</span>`;
-return;
-}
-
-el.innerHTML =
-`<span class="status idle"></span>`;
-}
-
-async function loadImage(src){
-
-return new Promise(resolve=>{
-
-if(!src) return resolve(null);
 
 const img = new Image();
 
 img.crossOrigin = "anonymous";
 
-img.onload = ()=>resolve(img);
+const promise = new Promise((resolve)=>{
 
-img.onerror = ()=>resolve(null);
+img.onload = ()=> resolve(img);
+img.onerror = ()=> resolve(null);
 
 img.src =
-src +
-(src.includes("?") ? "&" : "?") +
+url +
+(url.includes("?") ? "&" : "?") +
 "t=" +
 Date.now();
 
 });
 
+const loaded = await promise;
+
+if(loaded){
+imageCache[url] = loaded;
+}
+
+return loaded;
+
+}catch{
+
+return null;
+
+}
 }
 
 async function getUserId(username){
-
-const clean =
-username.trim().toLowerCase();
-
-if(userCache.has(clean)){
-return userCache.get(clean);
-}
 
 try{
 
@@ -95,16 +76,9 @@ excludeBannedUsers:false
 }
 );
 
-const json = await res.json();
+const data = await res.json();
 
-const id =
-json?.data?.[0]?.id;
-
-if(!id) return null;
-
-userCache.set(clean,id);
-
-return id;
+return data?.data?.[0]?.id || null;
 
 }catch{
 
@@ -113,36 +87,38 @@ return null;
 }
 }
 
-async function getAvatarURL(username){
+async function getAvatarFromUsername(username){
+
+if(!username) return null;
 
 const clean =
-username.trim().toLowerCase();
+username.toLowerCase().trim();
 
-if(thumbCache.has(clean)){
-return thumbCache.get(clean);
+if(avatarCache[clean]){
+return avatarCache[clean];
 }
 
-const userId =
+const id =
 await getUserId(username);
 
-if(!userId) return null;
+if(!id) return null;
 
 try{
 
 const res = await fetch(
-`https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=720x720&format=Png&isCircular=false`
+`https://thumbnails.roblox.com/v1/users/avatar?userIds=${id}&size=720x720&format=Png&isCircular=false`
 );
 
-const json = await res.json();
+const data = await res.json();
 
-const imageUrl =
-json?.data?.[0]?.imageUrl;
+const avatar =
+data?.data?.[0]?.imageUrl || null;
 
-if(!imageUrl) return null;
+if(avatar){
+avatarCache[clean] = avatar;
+}
 
-thumbCache.set(clean,imageUrl);
-
-return imageUrl;
+return avatar;
 
 }catch{
 
@@ -151,170 +127,134 @@ return null;
 }
 }
 
-async function getAvatar(username,side){
+function hashString(str){
 
-if(!username){
+let h = 0;
 
-setStatus(side,"idle");
+for(let i = 0; i < str.length; i++){
 
-return null;
+h = (h << 5) - h + str.charCodeAt(i);
 
-}
-
-const clean =
-username.trim().toLowerCase();
-
-if(avatarCache.has(clean)){
-
-setStatus(side,"success");
-
-return avatarCache.get(clean);
+h |= 0;
 
 }
 
-setStatus(side,"loading");
-
-const avatarURL =
-await getAvatarURL(username);
-
-if(!avatarURL){
-
-setStatus(side,"error");
-
-return null;
+return Math.abs(h);
 
 }
 
-const img =
-await loadImage(avatarURL);
+function paletteFromSeed(seed){
 
-if(!img){
+const h =
+hashString(seed || "?");
 
-setStatus(side,"error");
+const hue1 =
+h % 360;
 
-return null;
+const hue2 =
+(hue1 + 35 + (h % 40)) % 360;
+
+return{
+
+fill:
+`hsla(${hue1}, 85%, 60%, 0.20)`,
+
+stroke:
+`hsla(${hue1}, 90%, 70%, 0.55)`,
+
+text:
+`hsla(${hue2}, 100%, 96%, 0.98)`,
+
+glow:
+`hsla(${hue1}, 90%, 65%, 0.28)`
+
+};
 
 }
 
-avatarCache.set(clean,img);
+function getCustomColors(c1,c2,fallbackSeed){
 
-setStatus(side,"success");
+if(c1 && c2){
 
-return img;
+return{
+
+fill:c1,
+stroke:c2,
+text:c2,
+glow:c1
+
+};
+
 }
 
-function roundedRect(x,y,w,h,r){
+return paletteFromSeed(fallbackSeed);
+
+}
+
+function roundedRect(ctx,x,y,w,h,r){
+
+const radius =
+Math.min(r,w/2,h/2);
 
 ctx.beginPath();
 
-ctx.moveTo(x+r,y);
+ctx.moveTo(x + radius, y);
 
-ctx.lineTo(x+w-r,y);
-
-ctx.quadraticCurveTo(
-x+w,
+ctx.arcTo(
+x + w,
 y,
-x+w,
-y+r
+x + w,
+y + h,
+radius
 );
 
-ctx.lineTo(x+w,y+h-r);
-
-ctx.quadraticCurveTo(
-x+w,
-y+h,
-x+w-r,
-y+h
-);
-
-ctx.lineTo(x+r,y+h);
-
-ctx.quadraticCurveTo(
+ctx.arcTo(
+x + w,
+y + h,
 x,
-y+h,
-x,
-y+h-r
+y + h,
+radius
 );
 
-ctx.lineTo(x,y+r);
-
-ctx.quadraticCurveTo(
+ctx.arcTo(
+x,
+y + h,
 x,
 y,
-x+r,
-y
+radius
+);
+
+ctx.arcTo(
+x,
+y,
+x + w,
+y,
+radius
 );
 
 ctx.closePath();
 
 }
 
-function drawBackground(){
+function fitFontSize(
+ctx,
+text,
+maxWidth,
+startSize,
+weight = "bold",
+family = "Sans"
+){
 
-ctx.fillStyle = "#6f6f6f";
-ctx.fillRect(0,0,WIDTH,HEIGHT);
+let size = startSize;
 
-const grad =
-ctx.createLinearGradient(
-0,
-0,
-0,
-HEIGHT
-);
-
-grad.addColorStop(
-0,
-"rgba(255,255,255,.05)"
-);
-
-grad.addColorStop(
-1,
-"rgba(0,0,0,.25)"
-);
-
-ctx.fillStyle = grad;
-ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-}
-
-async function drawVS(){
-
-const img =
-await loadImage(VS_IMAGE);
-
-if(!img) return;
-
-ctx.save();
-
-ctx.shadowColor =
-"rgba(255,0,0,.45)";
-
-ctx.shadowBlur = 25;
-
-ctx.drawImage(
-img,
-WIDTH/2-110,
-HEIGHT/2-110,
-220,
-220
-);
-
-ctx.restore();
-
-}
-
-function fitText(text,max,start){
-
-let size = start;
-
-while(size > 10){
+while(size > 8){
 
 ctx.font =
-`bold ${size}px Arial`;
+`${weight} ${size}px ${family}`;
 
 if(
 ctx.measureText(text).width
-<= max
+<= maxWidth
 ){
 return size;
 }
@@ -324,217 +264,425 @@ size--;
 }
 
 return size;
+
 }
 
-function drawName(text,x,y,color){
+function drawCenteredText(
+ctx,
+text,
+x,
+y,
+maxWidth,
+startSize,
+fillStyle,
+strokeStyle,
+lineWidth,
+weight = "bold"
+){
 
 const size =
-fitText(text,320,44);
+fitFontSize(
+ctx,
+text,
+maxWidth,
+startSize,
+weight
+);
 
 ctx.font =
-`bold ${size}px Arial`;
+`${weight} ${size}px Sans`;
 
 ctx.textAlign = "center";
+ctx.textBaseline = "middle";
 
-ctx.lineWidth = 8;
+ctx.lineWidth = lineWidth;
 
-ctx.strokeStyle =
-"rgba(0,0,0,.9)";
+ctx.strokeStyle = strokeStyle;
+ctx.fillStyle = fillStyle;
 
 ctx.strokeText(text,x,y);
-
-ctx.fillStyle = color;
-
 ctx.fillText(text,x,y);
 
 }
 
-async function render(){
+async function drawBackground(bgUrl){
 
-ctx.clearRect(0,0,WIDTH,HEIGHT);
+if(bgUrl && bgUrl !== "0" && bgUrl !== "?"){
 
-drawBackground();
+const img =
+await loadImageSafe(bgUrl);
 
-const leftNick =
-document.getElementById("leftNick")
-.value.trim();
-
-const rightNick =
-document.getElementById("rightNick")
-.value.trim();
-
-const leftName =
-document.getElementById("leftName")
-.value.trim() || leftNick;
-
-const rightName =
-document.getElementById("rightName")
-.value.trim() || rightNick;
-
-const color1 =
-document.getElementById("color1")
-.value;
-
-const color2 =
-document.getElementById("color2")
-.value;
-
-const score =
-document.getElementById("score")
-.value.trim() || "0-0";
-
-const leftAvatar =
-await getAvatar(leftNick,"left");
-
-const rightAvatar =
-await getAvatar(rightNick,"right");
-
-if(leftAvatar){
+if(img){
 
 ctx.drawImage(
-leftAvatar,
-40,
-90,
-430,
-430
+img,
+0,
+0,
+WIDTH,
+HEIGHT
 );
-
-}
-
-if(rightAvatar){
-
-ctx.drawImage(
-rightAvatar,
-WIDTH-470,
-90,
-430,
-430
-);
-
-}
 
 ctx.fillStyle =
-"rgba(255,255,255,.04)";
+"rgba(0,0,0,0.55)";
+
+ctx.fillRect(
+0,
+0,
+WIDTH,
+HEIGHT
+);
+
+return;
+
+}
+
+}
+
+const bg =
+ctx.createLinearGradient(
+0,
+0,
+0,
+HEIGHT
+);
+
+bg.addColorStop(0,"#050505");
+bg.addColorStop(0.55,"#0b0b0b");
+bg.addColorStop(1,"#000000");
+
+ctx.fillStyle = bg;
+
+ctx.fillRect(
+0,
+0,
+WIDTH,
+HEIGHT
+);
+
+const glow =
+ctx.createRadialGradient(
+WIDTH / 2,
+HEIGHT / 2,
+50,
+WIDTH / 2,
+HEIGHT / 2,
+WIDTH / 1.6
+);
+
+glow.addColorStop(
+0,
+"rgba(255,255,255,0.08)"
+);
+
+glow.addColorStop(
+1,
+"rgba(0,0,0,0)"
+);
+
+ctx.fillStyle = glow;
+
+ctx.fillRect(
+0,
+0,
+WIDTH,
+HEIGHT
+);
+
+}
+
+async function drawPlayer(
+username,
+x,
+y,
+color1,
+color2
+){
+
+const avatarURL =
+await getAvatarFromUsername(username);
+
+const avatar =
+avatarURL
+? await loadImageSafe(avatarURL)
+: null;
+
+const palette =
+getCustomColors(
+color1,
+color2,
+username
+);
+
+const boxW = 360;
+const boxH = 440;
+
+const boxX =
+x - boxW / 2;
+
+const boxY = 90;
+
+ctx.save();
+
+ctx.shadowColor =
+palette.glow;
+
+ctx.shadowBlur = 32;
 
 roundedRect(
-30,
-70,
-450,
-470,
+ctx,
+boxX,
+boxY,
+boxW,
+boxH,
 28
 );
+
+ctx.fillStyle =
+"rgba(255,255,255,0.03)";
 
 ctx.fill();
 
-roundedRect(
-WIDTH-480,
-70,
-450,
-470,
-28
-);
+ctx.lineWidth = 3;
 
-ctx.fill();
-
-ctx.lineWidth = 5;
-
-ctx.strokeStyle = color1;
+ctx.strokeStyle =
+"rgba(255,255,255,0.10)";
 
 ctx.stroke();
 
-roundedRect(
-WIDTH-480,
-70,
-450,
-470,
-28
+ctx.restore();
+
+if(avatar){
+
+const size = 360;
+
+ctx.drawImage(
+avatar,
+x - size / 2,
+y - size / 2,
+size,
+size
 );
 
-ctx.lineWidth = 5;
+}
 
-ctx.strokeStyle = color2;
+const barY =
+y + 210;
 
-ctx.stroke();
+const grad =
+ctx.createLinearGradient(
+x - 120,
+barY,
+x + 120,
+barY
+);
 
-drawName(
+grad.addColorStop(
+0,
+palette.fill
+);
+
+grad.addColorStop(
+1,
+palette.stroke
+);
+
+ctx.fillStyle = grad;
+
+ctx.fillRect(
+x - 120,
+barY,
+240,
+12
+);
+
+}
+
+async function drawVS(){
+
+const vs =
+await loadImageSafe(VS_URL);
+
+if(vs){
+
+ctx.save();
+
+ctx.shadowColor =
+"rgba(255,0,0,0.45)";
+
+ctx.shadowBlur = 28;
+
+ctx.drawImage(
+vs,
+WIDTH / 2 - 110,
+HEIGHT / 2 - 110,
+220,
+220
+);
+
+ctx.restore();
+
+}
+
+}
+
+async function renderPVP(){
+
+ctx.clearRect(
+0,
+0,
+WIDTH,
+HEIGHT
+);
+
+const leftNick =
+safe(
+document.getElementById("leftNick").value
+) || "Player1";
+
+const rightNick =
+safe(
+document.getElementById("rightNick").value
+) || "Player2";
+
+const leftName =
+safe(
+document.getElementById("leftName").value
+) || leftNick;
+
+const rightName =
+safe(
+document.getElementById("rightName").value
+) || rightNick;
+
+const score =
+safe(
+document.getElementById("score").value
+) || "0-0";
+
+const bgUrl =
+safe(
+document.getElementById("background").value
+);
+
+const color1 =
+safe(
+document.getElementById("color1").value
+);
+
+const color2 =
+safe(
+document.getElementById("color2").value
+);
+
+await drawBackground(bgUrl);
+
+const topGlow =
+ctx.createRadialGradient(
+WIDTH / 2,
+80,
+20,
+WIDTH / 2,
+80,
+260
+);
+
+topGlow.addColorStop(
+0,
+"rgba(255,255,255,0.18)"
+);
+
+topGlow.addColorStop(
+1,
+"rgba(255,255,255,0)"
+);
+
+ctx.fillStyle = topGlow;
+
+ctx.fillRect(
+0,
+0,
+WIDTH,
+HEIGHT
+);
+
+drawCenteredText(
+ctx,
 leftName,
 250,
-65,
-color1
+86,
+360,
+42,
+getCustomColors(
+color1,
+color2,
+leftName
+).text,
+"rgba(0,0,0,0.95)",
+9
 );
 
-drawName(
+drawCenteredText(
+ctx,
 rightName,
-WIDTH-250,
-65,
+WIDTH - 250,
+86,
+360,
+42,
+getCustomColors(
+color1,
+color2,
+rightName
+).text,
+"rgba(0,0,0,0.95)",
+9
+);
+
+drawCenteredText(
+ctx,
+score,
+WIDTH / 2,
+600,
+320,
+104,
+"white",
+"rgba(0,0,0,0.95)",
+10
+);
+
+await drawPlayer(
+leftNick,
+250,
+320,
+color1,
 color2
 );
 
-ctx.font =
-"bold 100px Arial";
-
-ctx.textAlign = "center";
-
-ctx.lineWidth = 12;
-
-ctx.strokeStyle =
-"rgba(0,0,0,.9)";
-
-ctx.strokeText(
-score,
-WIDTH/2,
-600
-);
-
-ctx.fillStyle = "white";
-
-ctx.fillText(
-score,
-WIDTH/2,
-600
-);
-
-ctx.fillStyle = color1;
-
-ctx.fillRect(
-120,
-540,
-260,
-12
-);
-
-ctx.fillStyle = color2;
-
-ctx.fillRect(
-WIDTH-380,
-540,
-260,
-12
+await drawPlayer(
+rightNick,
+WIDTH - 250,
+320,
+color1,
+color2
 );
 
 await drawVS();
 
-}
+ctx.fillStyle =
+"rgba(255,255,255,0.05)";
 
-let renderTimeout;
-
-document.addEventListener(
-"input",
-()=>{
-
-clearTimeout(renderTimeout);
-
-renderTimeout =
-setTimeout(()=>{
-render();
-},200);
-
-}
+ctx.fillRect(
+0,
+0,
+WIDTH,
+HEIGHT
 );
+
+}
 
 function collectPVPData(){
 
 return{
+
 leftNick:
 document.getElementById("leftNick").value,
 
@@ -547,14 +695,18 @@ document.getElementById("leftName").value,
 rightName:
 document.getElementById("rightName").value,
 
+score:
+document.getElementById("score").value,
+
+background:
+document.getElementById("background").value,
+
 color1:
 document.getElementById("color1").value,
 
 color2:
-document.getElementById("color2").value,
+document.getElementById("color2").value
 
-score:
-document.getElementById("score").value
 };
 
 }
@@ -573,35 +725,39 @@ data.leftName || "";
 document.getElementById("rightName").value =
 data.rightName || "";
 
-document.getElementById("color1").value =
-data.color1 || "#5b8cff";
-
-document.getElementById("color2").value =
-data.color2 || "#ff4f7a";
-
 document.getElementById("score").value =
 data.score || "0-0";
 
-render();
+document.getElementById("background").value =
+data.background || "";
+
+document.getElementById("color1").value =
+data.color1 || "#ff004c";
+
+document.getElementById("color2").value =
+data.color2 || "#00d9ff";
+
+renderPVP();
 
 }
 
 function saveLocalPVP(){
 
 localStorage.setItem(
-"zzm_pvp_save",
+"zzm_team_pvp",
 JSON.stringify(
 collectPVPData()
 )
 );
 
-alert("Saved locally");
+alert("PVP saved");
 
 }
 
 function downloadTXTPVP(){
 
-const blob = new Blob(
+const blob =
+new Blob(
 [
 JSON.stringify(
 collectPVPData(),
@@ -653,9 +809,10 @@ reader.onload = ()=>{
 
 try{
 
-applyPVPData(
-JSON.parse(reader.result)
-);
+const data =
+JSON.parse(reader.result);
+
+applyPVPData(data);
 
 }catch{
 
@@ -687,16 +844,31 @@ a.click();
 
 async function reloadAvatars(){
 
-avatarCache.clear();
-thumbCache.clear();
-userCache.clear();
+for(const key in avatarCache){
+delete avatarCache[key];
+}
 
-setStatus("left","loading");
-setStatus("right","loading");
-
-await render();
+await renderPVP();
 
 }
+
+let renderTimeout;
+
+document.addEventListener(
+"input",
+()=>{
+
+clearTimeout(renderTimeout);
+
+renderTimeout =
+setTimeout(()=>{
+
+renderPVP();
+
+},120);
+
+}
+);
 
 let sidebarOpen = false;
 
@@ -713,21 +885,21 @@ sidebarOpen
 
 }
 
-const local =
+const localSave =
 localStorage.getItem(
-"zzm_pvp_save"
+"zzm_team_pvp"
 );
 
-if(local){
+if(localSave){
 
 try{
 
 applyPVPData(
-JSON.parse(local)
+JSON.parse(localSave)
 );
 
 }catch{}
 
 }
 
-render();
+renderPVP();
