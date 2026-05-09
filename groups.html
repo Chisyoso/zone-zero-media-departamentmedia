@@ -1,70 +1,250 @@
+<!-- groups.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zone Zero Media - Groups</title>
-<link rel="stylesheet" href="css/style.css">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+/>
+
+<title>Groups Generator</title>
+
+<link rel="stylesheet" href="css/main.css">
+
+<style>
+
+.groups-row{
+display:flex;
+gap:10px;
+}
+
+.groups-row input{
+flex:1;
+}
+
+.group-box{
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.06);
+border-radius:16px;
+padding:14px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.group-title{
+font-size:14px;
+font-weight:bold;
+letter-spacing:1px;
+opacity:.85;
+}
+
+.layout-box{
+margin-top:18px;
+padding:14px;
+border-radius:16px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.06);
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.layout-box label{
+font-size:13px;
+opacity:.8;
+}
+
+.layout-buttons{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.layout-buttons button{
+padding:14px;
+border:none;
+border-radius:14px;
+background:linear-gradient(
+180deg,
+#5f5fff,
+#3a3aff
+);
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+</style>
+
 </head>
+
 <body>
+
 <div class="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <h1>ZONE ZERO</h1>
-      <span>GROUPS</span>
-    </div>
 
-    <button class="toggle-close" onclick="toggleSidebar()">✕</button>
+<aside class="sidebar" id="sidebar">
 
-    <div class="section">
-      <h3>World Groups</h3>
-
-      <label>Background URL</label>
-      <input id="background" placeholder="Imgur or image URL">
-
-      <div class="two-col">
-        <div>
-          <label>Title</label>
-          <input id="title" value="SEASON 0: WORLD ZERO">
-        </div>
-        <div>
-          <label>Subtitle</label>
-          <input id="subtitle" value="SOCCER ZERO 2026">
-        </div>
-      </div>
-
-      <label>Region text</label>
-      <input id="region" value="EU">
-
-      <div class="range-row"><label>Box width</label><input id="boxWidth" type="range" min="180" max="340" value="280"><span id="boxWidthValue">280</span></div>
-      <div class="range-row"><label>Box height</label><input id="boxHeight" type="range" min="150" max="280" value="190"><span id="boxHeightValue">190</span></div>
-      <div class="range-row"><label>Title size</label><input id="titleSize" type="range" min="22" max="56" value="38"><span id="titleSizeValue">38</span></div>
-      <div class="range-row"><label>Region size</label><input id="regionSize" type="range" min="80" max="180" value="130"><span id="regionSizeValue">130</span></div>
-
-      <div id="groupsEditor" class="groups-editor"></div>
-    </div>
-
-    <div class="actions">
-      <button onclick="saveLocal()">Save Local</button>
-      <button onclick="downloadTXT()">Save TXT</button>
-      <button onclick="loadTXT()">Load TXT</button>
-      <button onclick="reloadEmojis()">Reload Emojis</button>
-      <button onclick="downloadPNG()">Save Photo</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="topbar">
-      <button class="mobile-open" onclick="toggleSidebar()">☰</button>
-      <h2>Groups Board</h2>
-    </div>
-    <section class="editor">
-      <canvas id="canvas" width="1536" height="864"></canvas>
-    </section>
-  </main>
+<div class="logo">
+<h1>ZONE ZERO</h1>
+<span>GROUPS</span>
 </div>
 
-<input type="file" id="txtLoader" hidden accept=".txt,.json">
-<script src="js/app.js"></script>
+<button
+class="toggle-close"
+onclick="toggleSidebar()"
+>
+✕
+</button>
+
+<button
+class="back-btn"
+onclick="location.href='index.html'"
+>
+← Back
+</button>
+
+<div class="section">
+
+<h3>Groups Editor</h3>
+
+<label>Background URL</label>
+
+<input
+id="bg"
+placeholder="https://imgur.com/..."
+value="https://i.imgur.com/Z72kUog.png"
+/>
+
+<label>Left Text</label>
+
+<input
+id="sideText"
+placeholder="EU"
+value="EU"
+/>
+
+<label>Groups Count</label>
+
+<input
+id="groupCount"
+type="number"
+min="1"
+max="20"
+value="8"
+/>
+
+<label>Teams Per Group</label>
+
+<input
+id="teamsPerGroup"
+type="number"
+min="1"
+max="20"
+value="5"
+/>
+
+<div id="groupsContainer"></div>
+
+<div class="layout-box">
+
+<div class="group-title">
+Layout Controls
+</div>
+
+<label>Move Speed</label>
+
+<input
+id="moveSpeed"
+type="number"
+value="8"
+/>
+
+<div class="layout-buttons">
+
+<button onclick="toggleLayout()">
+Toggle Layout
+</button>
+
+<button onclick="addGroup()">
+Add Group
+</button>
+
+<button onclick="removeGroup()">
+Remove Group
+</button>
+
+<button onclick="resetLayout()">
+Reset Layout
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="actions">
+
+<button onclick="saveLocal()">
+Save Local
+</button>
+
+<button onclick="downloadTXT()">
+Save TXT
+</button>
+
+<button onclick="loadTXT()">
+Load TXT
+</button>
+
+<button onclick="downloadImage()">
+Save Photo
+</button>
+
+</div>
+
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+
+<button
+class="mobile-open"
+onclick="toggleSidebar()"
+>
+☰
+</button>
+
+<h2>Groups Generator</h2>
+
+</div>
+
+<section class="editor">
+
+<canvas
+id="canvas"
+width="1536"
+height="864"
+></canvas>
+
+</section>
+
+</main>
+
+</div>
+
+<input
+type="file"
+id="txtLoader"
+hidden
+accept=".txt,.json"
+/>
+
+<script src="js/groups.js"></script>
+
 </body>
 </html>
