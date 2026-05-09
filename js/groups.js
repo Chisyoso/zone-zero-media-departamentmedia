@@ -1,554 +1,1084 @@
-// js/groups.js
+// js/groups.js COMPLETO
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas =
+document.getElementById("canvas");
+
+const ctx =
+canvas.getContext("2d");
+
+const $ = id =>
+document.getElementById(id);
 
 canvas.width = 1600;
 canvas.height = 900;
 
-const BG_URL = "https://i.imgur.com/Z72kUog.png";
+const DEFAULT_BG =
+"https://i.imgur.com/Z72kUog.png";
 
-const imageCache = new Map();
+const imageCache =
+new Map();
 
-const $ = (id) => document.getElementById(id);
+const sidebar =
+$("sidebar");
 
 let sidebarOpen = false;
 
-function toggleSidebar() {
-  sidebarOpen = !sidebarOpen;
+let layoutMode = false;
 
-  const sidebar = $("sidebar");
+let drag = null;
 
-  if (window.innerWidth <= 900) {
-    sidebar.classList.toggle("open", sidebarOpen);
-  }
+let data =
+JSON.parse(
+localStorage.getItem(
+"zzm_groups_v3"
+)
+|| "null"
+)
+||
+{
+bgUrl:DEFAULT_BG,
+globalColor:"#6f8cff",
+useGlobalColor:true,
+showBorders:true,
+moveAll:false,
+gapX:35,
+gapY:28,
+groups:[]
+};
+
+if(!data.groups.length){
+
+for(let i=0;i<2;i++){
+
+data.groups.push(
+createGroup()
+);
+
 }
 
-window.addEventListener("resize", () => {
-  if (window.innerWidth > 900) {
-    $("sidebar").classList.remove("open");
-  }
+}
+
+function createGroup(){
+
+return{
+
+x:0,
+y:0,
+
+width:360,
+height:210,
+
+show:true,
+
+color:"#6f8cff",
+
+teams:[
+{
+name:"TEAM 1",
+emoji:"<:LOGO:1501791652354719925>"
+},
+{
+name:"TEAM 2",
+emoji:"<:LOGO:1501791652354719925>"
+},
+{
+name:"TEAM 3",
+emoji:"<:LOGO:1501791652354719925>"
+},
+{
+name:"TEAM 4",
+emoji:"<:LOGO:1501791652354719925>"
+}
+]
+
+};
+
+}
+
+function saveData(){
+
+localStorage.setItem(
+"zzm_groups_v3",
+JSON.stringify(data)
+);
+
+}
+
+function toggleSidebar(){
+
+sidebarOpen = !sidebarOpen;
+
+if(sidebarOpen){
+
+sidebar.classList.add(
+"open"
+);
+
+}else{
+
+sidebar.classList.remove(
+"open"
+);
+
+}
+
+}
+
+window.toggleSidebar =
+toggleSidebar;
+
+function addGroup(){
+
+data.groups.push(
+createGroup()
+);
+
+renderSidebar();
+
+render();
+
+saveData();
+
+}
+
+window.addGroup =
+addGroup;
+
+function removeGroup(i){
+
+data.groups.splice(i,1);
+
+renderSidebar();
+
+render();
+
+saveData();
+
+}
+
+window.removeGroup =
+removeGroup;
+
+function renderSidebar(){
+
+const wrap =
+$("groupsContainer");
+
+wrap.innerHTML = "";
+
+data.groups.forEach((g,i)=>{
+
+const div =
+document.createElement("div");
+
+div.className =
+"group-box";
+
+div.innerHTML = `
+
+<div class="group-top">
+
+<div class="group-title">
+BLOCK ${i+1}
+</div>
+
+<button
+class="group-remove"
+onclick="removeGroup(${i})"
+>
+✕
+</button>
+
+</div>
+
+<label>Block Color</label>
+
+<input
+type="color"
+class="group-color"
+data-group="${i}"
+value="${g.color}"
+>
+
+<label>Width</label>
+
+<input
+type="range"
+min="180"
+max="700"
+value="${g.width}"
+class="group-width"
+data-group="${i}"
+>
+
+<label>Height</label>
+
+<input
+type="range"
+min="120"
+max="500"
+value="${g.height}"
+class="group-height"
+data-group="${i}"
+>
+
+<div class="check-line">
+
+<input
+type="checkbox"
+class="group-show"
+data-group="${i}"
+${g.show ? "checked" : ""}
+
+>
+
+<span>
+Show block
+</span>
+
+</div>
+
+${g.teams.map((t,ti)=>`
+
+<div class="team-item">
+
+<input
+class="team-name"
+data-group="${i}"
+data-team="${ti}"
+value="${t.name}"
+placeholder="Team"
+>
+
+<input
+class="team-emoji"
+data-group="${i}"
+data-team="${ti}"
+value="${t.emoji}"
+placeholder="<:emoji:id>"
+>
+
+</div>
+
+`).join("")}
+
+`;
+
+wrap.appendChild(div);
+
 });
 
-const defaultData = {
-  globalColor: "#00d9ff",
-  useGlobalColor: true,
-  showBorders: true,
-  minimalBorders: false,
-  blockWidth: 420,
-  blockHeight: 82,
-  gap: 18,
+bindInputs();
 
-  groups: [
-    {
-      id: crypto.randomUUID(),
-      x: 110,
-      y: 140,
-      color: "#00d9ff",
-      teams: [
-        { name: "TEAM ONE", badge: "<:MEDIAZZ:1501791652354719925>" },
-        { name: "TEAM TWO", badge: "<:MEDIAZZ:1501791652354719925>" },
-        { name: "TEAM THREE", badge: "<:MEDIAZZ:1501791652354719925>" },
-        { name: "TEAM FOUR", badge: "<:MEDIAZZ:1501791652354719925>" }
-      ]
-    }
-  ]
-};
-
-let data = loadData();
-
-function loadData() {
-  try {
-    const saved = localStorage.getItem("zzm_groups");
-
-    if (!saved) {
-      return structuredClone(defaultData);
-    }
-
-    return {
-      ...structuredClone(defaultData),
-      ...JSON.parse(saved)
-    };
-  } catch {
-    return structuredClone(defaultData);
-  }
 }
 
-function saveData() {
-  localStorage.setItem("zzm_groups", JSON.stringify(data));
-}
+function bindInputs(){
 
-function emojiURL(text) {
-  const match = String(text || "").match(/<?a?:\w+:(\d+)>?/);
+document
+.querySelectorAll(".team-name")
+.forEach(el=>{
 
-  if (!match) return null;
+el.oninput = e=>{
 
-  return `https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
-}
+const g =
++e.target.dataset.group;
 
-async function loadImage(src) {
-  return new Promise((resolve) => {
-    if (!src) return resolve(null);
+const t =
++e.target.dataset.team;
 
-    if (imageCache.has(src)) {
-      return resolve(imageCache.get(src));
-    }
+data.groups[g]
+.teams[t]
+.name =
+e.target.value;
 
-    const img = new Image();
+render();
 
-    img.crossOrigin = "anonymous";
+saveData();
 
-    img.onload = () => {
-      imageCache.set(src, img);
-      resolve(img);
-    };
-
-    img.onerror = () => {
-      resolve(null);
-    };
-
-    img.src = src + (src.includes("?") ? "&" : "?") + "t=" + Date.now();
-  });
-}
-
-function roundedRect(x, y, w, h, r) {
-  ctx.beginPath();
-
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-
-  ctx.closePath();
-}
-
-function syncUI() {
-  $("globalColor").value = data.globalColor;
-  $("useGlobalColor").checked = data.useGlobalColor;
-  $("showBorders").checked = data.showBorders;
-  $("minimalBorders").checked = data.minimalBorders;
-  $("blockWidth").value = data.blockWidth;
-  $("blockHeight").value = data.blockHeight;
-  $("gap").value = data.gap;
-
-  renderGroupsEditor();
-}
-
-function renderGroupsEditor() {
-  const container = $("groupsEditor");
-
-  container.innerHTML = "";
-
-  data.groups.forEach((group, groupIndex) => {
-    const div = document.createElement("div");
-
-    div.className = "player-box";
-
-    div.innerHTML = `
-      <div class="player-header">
-        <h4>GROUP ${groupIndex + 1}</h4>
-
-        <button
-          type="button"
-          style="
-            width:36px;
-            height:36px;
-            border:none;
-            border-radius:10px;
-            background:#ff4d4d;
-            color:white;
-            cursor:pointer;
-            font-weight:bold;
-          "
-          onclick="removeGroup('${group.id}')"
-        >
-          ✕
-        </button>
-      </div>
-
-      <label class="color-label">Group Color</label>
-
-      <input
-        type="color"
-        value="${group.color}"
-        onchange="updateGroupColor('${group.id}', this.value)"
-      >
-
-      ${group.teams.map((team, teamIndex) => `
-        <div
-          style="
-            margin-top:10px;
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-          "
-        >
-          <input
-            placeholder="Team Name"
-            value="${team.name}"
-            oninput="updateTeam('${group.id}', ${teamIndex}, 'name', this.value)"
-          >
-
-          <input
-            placeholder="<:emoji:id>"
-            value="${team.badge}"
-            oninput="updateTeam('${group.id}', ${teamIndex}, 'badge', this.value)"
-          >
-        </div>
-      `).join("")}
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-window.updateTeam = (groupId, teamIndex, key, value) => {
-  const group = data.groups.find(g => g.id === groupId);
-
-  if (!group) return;
-
-  group.teams[teamIndex][key] = value;
-
-  saveData();
-  render();
 };
 
-window.updateGroupColor = (groupId, value) => {
-  const group = data.groups.find(g => g.id === groupId);
-
-  if (!group) return;
-
-  group.color = value;
-
-  if (data.useGlobalColor) {
-    data.groups.forEach(g => {
-      g.color = value;
-    });
-
-    data.globalColor = value;
-  }
-
-  saveData();
-
-  syncUI();
-
-  render();
-};
-
-window.removeGroup = (id) => {
-  data.groups = data.groups.filter(g => g.id !== id);
-
-  saveData();
-
-  syncUI();
-
-  render();
-};
-
-function addGroup() {
-  const color = data.useGlobalColor
-    ? data.globalColor
-    : "#00d9ff";
-
-  data.groups.push({
-    id: crypto.randomUUID(),
-    x: 120,
-    y: 120,
-    color,
-    teams: [
-      { name: "TEAM ONE", badge: "" },
-      { name: "TEAM TWO", badge: "" },
-      { name: "TEAM THREE", badge: "" },
-      { name: "TEAM FOUR", badge: "" }
-    ]
-  });
-
-  saveData();
-
-  syncUI();
-
-  render();
-}
-
-$("addGroup").onclick = addGroup;
-
-$("globalColor").oninput = (e) => {
-  data.globalColor = e.target.value;
-
-  if (data.useGlobalColor) {
-    data.groups.forEach(g => {
-      g.color = e.target.value;
-    });
-
-    syncUI();
-  }
-
-  saveData();
-
-  render();
-};
-
-$("useGlobalColor").onchange = (e) => {
-  data.useGlobalColor = e.target.checked;
-
-  if (data.useGlobalColor) {
-    data.groups.forEach(g => {
-      g.color = data.globalColor;
-    });
-
-    syncUI();
-  }
-
-  saveData();
-
-  render();
-};
-
-$("showBorders").onchange = (e) => {
-  data.showBorders = e.target.checked;
-
-  saveData();
-
-  render();
-};
-
-$("minimalBorders").onchange = (e) => {
-  data.minimalBorders = e.target.checked;
-
-  saveData();
-
-  render();
-};
-
-$("blockWidth").oninput = (e) => {
-  data.blockWidth = Number(e.target.value);
-
-  saveData();
-
-  render();
-};
-
-$("blockHeight").oninput = (e) => {
-  data.blockHeight = Number(e.target.value);
-
-  saveData();
-
-  render();
-};
-
-$("gap").oninput = (e) => {
-  data.gap = Number(e.target.value);
-
-  saveData();
-
-  render();
-};
-
-async function drawBackground() {
-  const bg = await loadImage(BG_URL);
-
-  if (bg) {
-    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = "#0b0b0b";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-}
-
-async function drawBlock(x, y, text, badge, color) {
-  const w = data.blockWidth;
-  const h = data.blockHeight;
-
-  ctx.save();
-
-  roundedRect(x, y, w, h, 22);
-
-  ctx.fillStyle = "rgba(0,0,0,.42)";
-  ctx.fill();
-
-  if (data.showBorders) {
-    ctx.lineWidth = data.minimalBorders ? 1.5 : 3;
-
-    ctx.strokeStyle = color;
-    ctx.stroke();
-  }
-
-  ctx.restore();
-
-  ctx.fillStyle = "white";
-
-  ctx.font = "bold 34px Arial";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-
-  ctx.fillText(
-    String(text || "?").slice(0, 18),
-    x + 28,
-    y + h / 2
-  );
-
-  const url = emojiURL(badge);
-
-  if (url) {
-    const img = await loadImage(url);
-
-    if (img) {
-      ctx.drawImage(
-        img,
-        x + w - 68,
-        y + 12,
-        56,
-        56
-      );
-    }
-  }
-}
-
-let dragging = null;
-
-function getPointer(e) {
-  const rect = canvas.getBoundingClientRect();
-
-  return {
-    x: (e.clientX - rect.left) * (canvas.width / rect.width),
-    y: (e.clientY - rect.top) * (canvas.height / rect.height)
-  };
-}
-
-canvas.addEventListener("pointerdown", (e) => {
-  const p = getPointer(e);
-
-  for (let i = data.groups.length - 1; i >= 0; i--) {
-    const g = data.groups[i];
-
-    const totalH =
-      (data.blockHeight * 4) +
-      (data.gap * 3);
-
-    if (
-      p.x >= g.x &&
-      p.x <= g.x + data.blockWidth &&
-      p.y >= g.y &&
-      p.y <= g.y + totalH
-    ) {
-      dragging = {
-        group: g,
-        offsetX: p.x - g.x,
-        offsetY: p.y - g.y
-      };
-
-      break;
-    }
-  }
 });
 
-canvas.addEventListener("pointermove", (e) => {
-  if (!dragging) return;
+document
+.querySelectorAll(".team-emoji")
+.forEach(el=>{
 
-  const p = getPointer(e);
+el.oninput = e=>{
 
-  dragging.group.x = p.x - dragging.offsetX;
-  dragging.group.y = p.y - dragging.offsetY;
+const g =
++e.target.dataset.group;
 
-  render();
+const t =
++e.target.dataset.team;
+
+data.groups[g]
+.teams[t]
+.emoji =
+e.target.value;
+
+render();
+
+saveData();
+
+};
+
 });
 
-canvas.addEventListener("pointerup", () => {
-  if (!dragging) return;
+document
+.querySelectorAll(".group-color")
+.forEach(el=>{
 
-  saveData();
+el.oninput = e=>{
 
-  dragging = null;
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.color =
+e.target.value;
+
+render();
+
+saveData();
+
+};
+
 });
 
-canvas.addEventListener("pointercancel", () => {
-  dragging = null;
+document
+.querySelectorAll(".group-width")
+.forEach(el=>{
+
+el.oninput = e=>{
+
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.width =
++e.target.value;
+
+render();
+
+saveData();
+
+};
+
 });
 
-async function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+document
+.querySelectorAll(".group-height")
+.forEach(el=>{
 
-  await drawBackground();
+el.oninput = e=>{
 
-  for (const group of data.groups) {
-    for (let i = 0; i < group.teams.length; i++) {
-      const team = group.teams[i];
+const g =
++e.target.dataset.group;
 
-      await drawBlock(
-        group.x,
-        group.y + i * (data.blockHeight + data.gap),
-        team.name,
-        team.badge,
-        group.color
-      );
-    }
-  }
-}
+data.groups[g]
+.height =
++e.target.value;
 
-function saveLocal() {
-  saveData();
+render();
 
-  alert("Saved locally");
-}
+saveData();
 
-function downloadTXT() {
-  const blob = new Blob(
-    [JSON.stringify(data, null, 2)],
-    { type: "text/plain" }
-  );
+};
 
-  const a = document.createElement("a");
-
-  a.href = URL.createObjectURL(blob);
-  a.download = "groups.txt";
-
-  a.click();
-}
-
-function loadTXT() {
-  $("txtLoader").click();
-}
-
-$("txtLoader").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    try {
-      data = JSON.parse(reader.result);
-
-      saveData();
-
-      syncUI();
-
-      render();
-    } catch {
-      alert("Invalid file");
-    }
-  };
-
-  reader.readAsText(file);
 });
 
-function downloadImage() {
-  const a = document.createElement("a");
+document
+.querySelectorAll(".group-show")
+.forEach(el=>{
 
-  a.href = canvas.toDataURL("image/png");
-  a.download = "groups.png";
+el.onchange = e=>{
 
-  a.click();
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.show =
+e.target.checked;
+
+render();
+
+saveData();
+
+};
+
+});
+
 }
 
-syncUI();
+function emojiURL(text){
+
+const match =
+String(text || "")
+.match(/<?a?:\w+:(\d+)>?/);
+
+if(!match)
+return null;
+
+return
+`https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
+
+}
+
+async function loadImage(src){
+
+return new Promise(resolve=>{
+
+if(!src)
+return resolve(null);
+
+if(imageCache.has(src))
+return resolve(
+imageCache.get(src)
+);
+
+const img =
+new Image();
+
+img.crossOrigin =
+"anonymous";
+
+img.onload = ()=>{
+
+imageCache.set(src,img);
+
+resolve(img);
+
+};
+
+img.onerror = ()=>{
+
+resolve(null);
+
+};
+
+img.src =
+src +
+(src.includes("?")
+? "&"
+: "?") +
+"t=" +
+Date.now();
+
+});
+
+}
+
+async function drawBackground(){
+
+const bg =
+await loadImage(
+$("bgUrl").value.trim()
+|| DEFAULT_BG
+);
+
+if(bg){
+
+ctx.drawImage(
+bg,
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+}else{
+
+ctx.fillStyle =
+"#10131d";
+
+ctx.fillRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+}
+
+ctx.fillStyle =
+"rgba(0,0,0,.22)";
+
+ctx.fillRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+}
+
+function roundedRect(
+x,y,w,h,r
+){
+
+ctx.beginPath();
+
+ctx.moveTo(x+r,y);
+
+ctx.lineTo(x+w-r,y);
+
+ctx.quadraticCurveTo(
+x+w,y,
+x+w,y+r
+);
+
+ctx.lineTo(x+w,y+h-r);
+
+ctx.quadraticCurveTo(
+x+w,y+h,
+x+w-r,y+h
+);
+
+ctx.lineTo(x+r,y+h);
+
+ctx.quadraticCurveTo(
+x,y+h,
+x,y+h-r
+);
+
+ctx.lineTo(x,y+r);
+
+ctx.quadraticCurveTo(
+x,y,
+x+r,y
+);
+
+ctx.closePath();
+
+}
+
+async function render(){
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+await drawBackground();
+
+const gapX =
++$("gapX").value;
+
+const gapY =
++$("gapY").value;
+
+const useGlobal =
+$("useGlobalColor").checked;
+
+const globalColor =
+$("globalColor").value;
+
+const showBorders =
+$("showBorders").checked;
+
+for(let i=0;i<data.groups.length;i++){
+
+const g =
+data.groups[i];
+
+if(!g.show)
+continue;
+
+const col =
+i % 2;
+
+const row =
+Math.floor(i / 2);
+
+const startX =
+120;
+
+const startY =
+100;
+
+const x =
+startX +
+(col * (g.width + gapX))
++ g.x;
+
+const y =
+startY +
+(row * (g.height + gapY))
++ g.y;
+
+const color =
+useGlobal
+? globalColor
+: g.color;
+
+ctx.save();
+
+ctx.shadowColor =
+color;
+
+ctx.shadowBlur = 24;
+
+roundedRect(
+x,
+y,
+g.width,
+g.height,
+22
+);
+
+ctx.fillStyle =
+"rgba(0,0,0,.48)";
+
+ctx.fill();
+
+if(showBorders){
+
+ctx.lineWidth = 3;
+
+ctx.strokeStyle =
+color;
+
+ctx.stroke();
+
+}
+
+ctx.restore();
+
+const rowH =
+g.height / 4;
+
+for(let t=0;t<4;t++){
+
+const team =
+g.teams[t];
+
+const ty =
+y + (t * rowH);
+
+if(t !== 0){
+
+ctx.fillStyle =
+"rgba(255,255,255,.08)";
+
+ctx.fillRect(
+x + 20,
+ty,
+g.width - 40,
+1
+);
+
+}
+
+ctx.fillStyle =
+"white";
+
+ctx.textAlign =
+"left";
+
+ctx.textBaseline =
+"middle";
+
+ctx.font =
+`bold ${Math.max(
+18,
+rowH * .22
+)}px Arial`;
+
+ctx.fillText(
+team.name || "?",
+x + 30,
+ty + rowH/2
+);
+
+const emoji =
+emojiURL(
+team.emoji
+);
+
+if(emoji){
+
+const img =
+await loadImage(
+emoji
+);
+
+if(img){
+
+const size =
+rowH * .58;
+
+ctx.drawImage(
+img,
+x + g.width - size - 26,
+ty + rowH/2 - size/2,
+size,
+size
+);
+
+}
+
+}
+
+}
+
+if(layoutMode){
+
+ctx.beginPath();
+
+ctx.arc(
+x + g.width/2,
+y - 20,
+28,
+0,
+Math.PI * 2
+);
+
+ctx.fillStyle =
+color;
+
+ctx.fill();
+
+ctx.fillStyle =
+"white";
+
+ctx.textAlign =
+"center";
+
+ctx.font =
+"bold 13px Arial";
+
+ctx.fillText(
+"MOVE",
+x + g.width/2,
+y - 16
+);
+
+}
+
+}
+
+}
+
+function toggleLayoutMode(){
+
+layoutMode =
+!layoutMode;
+
+render();
+
+}
+
+window.toggleLayoutMode =
+toggleLayoutMode;
+
+function resetLayout(){
+
+data.groups.forEach(g=>{
+
+g.x = 0;
+g.y = 0;
+
+});
+
+render();
+
+saveData();
+
+}
+
+window.resetLayout =
+resetLayout;
+
+function pointerPos(e){
+
+const rect =
+canvas.getBoundingClientRect();
+
+return{
+
+x:
+(e.clientX - rect.left)
+*
+(canvas.width / rect.width),
+
+y:
+(e.clientY - rect.top)
+*
+(canvas.height / rect.height)
+
+};
+
+}
+
+canvas.addEventListener(
+"pointerdown",
+e=>{
+
+if(!layoutMode)
+return;
+
+const p =
+pointerPos(e);
+
+const gapX =
++$("gapX").value;
+
+const gapY =
++$("gapY").value;
+
+for(let i=data.groups.length-1;i>=0;i--){
+
+const g =
+data.groups[i];
+
+const col =
+i % 2;
+
+const row =
+Math.floor(i / 2);
+
+const x =
+120 +
+(col * (g.width + gapX))
++ g.x;
+
+const y =
+100 +
+(row * (g.height + gapY))
++ g.y;
+
+if(
+p.x >= x - 40 &&
+p.x <= x + g.width + 40 &&
+p.y >= y - 40 &&
+p.y <= y + g.height + 40
+){
+
+drag = {
+
+index:i,
+
+startX:p.x,
+startY:p.y,
+
+origX:g.x,
+origY:g.y
+
+};
+
+break;
+
+}
+
+}
+
+}
+);
+
+canvas.addEventListener(
+"pointermove",
+e=>{
+
+if(!drag)
+return;
+
+const p =
+pointerPos(e);
+
+const dx =
+p.x - drag.startX;
+
+const dy =
+p.y - drag.startY;
+
+if($("moveAll").checked){
+
+data.groups.forEach(g=>{
+
+g.x += dx;
+g.y += dy;
+
+});
+
+drag.startX = p.x;
+drag.startY = p.y;
+
+}else{
+
+const g =
+data.groups[drag.index];
+
+g.x =
+drag.origX + dx;
+
+g.y =
+drag.origY + dy;
+
+}
+
+render();
+
+saveData();
+
+}
+);
+
+window.addEventListener(
+"pointerup",
+()=>{
+
+drag = null;
+
+}
+);
+
+function saveLocal(){
+
+saveData();
+
+alert("Saved");
+
+}
+
+window.saveLocal =
+saveLocal;
+
+function downloadImage(){
+
+const a =
+document.createElement("a");
+
+a.download =
+"groups.png";
+
+a.href =
+canvas.toDataURL(
+"image/png"
+);
+
+a.click();
+
+}
+
+window.downloadImage =
+downloadImage;
+
+function saveTXT(){
+
+const blob =
+new Blob(
+[
+JSON.stringify(
+data,
+null,
+2
+)
+],
+{
+type:"text/plain"
+}
+);
+
+const a =
+document.createElement("a");
+
+a.href =
+URL.createObjectURL(
+blob
+);
+
+a.download =
+"groups.txt";
+
+a.click();
+
+}
+
+window.saveTXT =
+saveTXT;
+
+function loadTXT(){
+
+$("txtLoader").click();
+
+}
+
+window.loadTXT =
+loadTXT;
+
+$("txtLoader")
+.addEventListener(
+"change",
+e=>{
+
+const file =
+e.target.files[0];
+
+if(!file)
+return;
+
+const reader =
+new FileReader();
+
+reader.onload =
+()=>{
+
+try{
+
+data =
+JSON.parse(
+reader.result
+);
+
+saveData();
+
+renderSidebar();
+
+render();
+
+}catch{
+
+alert(
+"Invalid file"
+);
+
+}
+
+};
+
+reader.readAsText(
+file
+);
+
+}
+);
+
+[
+"bgUrl",
+"globalColor",
+"useGlobalColor",
+"showBorders",
+"gapX",
+"gapY"
+]
+.forEach(id=>{
+
+$(id)
+?.addEventListener(
+"input",
+()=>{
+
+render();
+
+saveData();
+
+}
+);
+
+});
+
+renderSidebar();
+
 render();
