@@ -1,4 +1,4 @@
-// js/groups.js
+// REEMPLAZA COMPLETAMENTE js/groups.js
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -11,63 +11,45 @@ canvas.height = 900;
 const DEFAULT_BG =
 "https://i.imgur.com/Z72kUog.png";
 
+const imageCache = new Map();
+
 const sidebar = $("sidebar");
 
 let sidebarOpen = false;
-
-function toggleSidebar(){
-
-sidebarOpen = !sidebarOpen;
-
-if(window.innerWidth <= 900){
-
-sidebar.style.transform =
-sidebarOpen
-? "translateX(0)"
-: "translateX(-100%)";
-
-}
-
-}
-
-window.addEventListener("resize",()=>{
-
-if(window.innerWidth > 900){
-
-sidebar.style.transform = "translateX(0)";
-
-}else{
-
-sidebar.style.transform =
-"translateX(-100%)";
-
-}
-
-});
-
-if(window.innerWidth <= 900){
-
-sidebar.style.transform =
-"translateX(-100%)";
-
-}
-
-const imageCache = new Map();
 
 let layoutMode = false;
 
 let drag = null;
 
-let groups =
+const defaultData = {
+bgUrl: DEFAULT_BG,
+globalColor: "#6f8cff",
+useGlobalColor: true,
+showBorders: true,
+moveAll: false,
+blockWidth: 360,
+blockHeight: 210,
+gapX: 35,
+gapY: 28,
+groups: []
+};
+
+let data =
 JSON.parse(
-localStorage.getItem("zzm_groups_data")
+localStorage.getItem("zzm_groups_v2")
 || "null"
 )
-||
-[
-createGroup(),
-createGroup()
-];
+|| structuredClone(defaultData);
+
+if(!data.groups.length){
+
+for(let i=0;i<2;i++){
+
+data.groups.push(createGroup());
+
+}
+
+}
 
 function createGroup(){
 
@@ -75,6 +57,11 @@ return{
 
 x:0,
 y:0,
+
+width:360,
+height:210,
+
+show:true,
 
 color:"#6f8cff",
 
@@ -104,15 +91,56 @@ emoji:"<:LOGO:1501791652354719925>"
 function saveData(){
 
 localStorage.setItem(
-"zzm_groups_data",
-JSON.stringify(groups)
+"zzm_groups_v2",
+JSON.stringify(data)
 );
+
+}
+
+function toggleSidebar(){
+
+sidebarOpen = !sidebarOpen;
+
+if(window.innerWidth <= 900){
+
+sidebar.style.transform =
+sidebarOpen
+? "translateX(0)"
+: "translateX(-100%)";
+
+}
+
+}
+
+window.toggleSidebar =
+toggleSidebar;
+
+window.addEventListener("resize",()=>{
+
+if(window.innerWidth > 900){
+
+sidebar.style.transform =
+"translateX(0)";
+
+}else{
+
+sidebar.style.transform =
+"translateX(-100%)";
+
+}
+
+});
+
+if(window.innerWidth <= 900){
+
+sidebar.style.transform =
+"translateX(-100%)";
 
 }
 
 function addGroup(){
 
-groups.push(createGroup());
+data.groups.push(createGroup());
 
 renderSidebar();
 
@@ -121,10 +149,12 @@ render();
 saveData();
 
 }
+
+window.addGroup = addGroup;
 
 function removeGroup(i){
 
-groups.splice(i,1);
+data.groups.splice(i,1);
 
 renderSidebar();
 
@@ -133,6 +163,8 @@ render();
 saveData();
 
 }
+
+window.removeGroup = removeGroup;
 
 function renderSidebar(){
 
@@ -141,7 +173,7 @@ $("groupsContainer");
 
 wrap.innerHTML = "";
 
-groups.forEach((g,i)=>{
+data.groups.forEach((g,i)=>{
 
 const div =
 document.createElement("div");
@@ -154,7 +186,7 @@ div.innerHTML = `
 <div class="group-top">
 
 <div class="group-title">
-Block ${i+1}
+BLOCK ${i+1}
 </div>
 
 <button
@@ -179,16 +211,39 @@ value="${g.color}"
 
 <input
 type="checkbox"
-class="move-group"
+class="group-show"
 data-group="${i}"
-checked
+${g.show ? "checked" : ""}
+
 >
 
 <span>
-Move this block
+Show Block
 </span>
 
 </div>
+
+<label>Width</label>
+
+<input
+type="range"
+min="180"
+max="700"
+value="${g.width}"
+class="group-width"
+data-group="${i}"
+>
+
+<label>Height</label>
+
+<input
+type="range"
+min="120"
+max="500"
+value="${g.height}"
+class="group-height"
+data-group="${i}"
+>
 
 ${g.teams.map((t,ti)=>`
 
@@ -199,7 +254,7 @@ class="team-name"
 data-group="${i}"
 data-team="${ti}"
 value="${t.name}"
-placeholder="Team name"
+placeholder="Team"
 >
 
 <input
@@ -238,7 +293,9 @@ const g =
 const t =
 +e.target.dataset.team;
 
-groups[g].teams[t].name =
+data.groups[g]
+.teams[t]
+.name =
 e.target.value;
 
 render();
@@ -261,7 +318,9 @@ const g =
 const t =
 +e.target.dataset.team;
 
-groups[g].teams[t].emoji =
+data.groups[g]
+.teams[t]
+.emoji =
 e.target.value;
 
 render();
@@ -281,8 +340,72 @@ el.oninput = e=>{
 const g =
 +e.target.dataset.group;
 
-groups[g].color =
+data.groups[g]
+.color =
 e.target.value;
+
+render();
+
+saveData();
+
+};
+
+});
+
+document
+.querySelectorAll(".group-show")
+.forEach(el=>{
+
+el.onchange = e=>{
+
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.show =
+e.target.checked;
+
+render();
+
+saveData();
+
+};
+
+});
+
+document
+.querySelectorAll(".group-width")
+.forEach(el=>{
+
+el.oninput = e=>{
+
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.width =
++e.target.value;
+
+render();
+
+saveData();
+
+};
+
+});
+
+document
+.querySelectorAll(".group-height")
+.forEach(el=>{
+
+el.oninput = e=>{
+
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.height =
++e.target.value;
 
 render();
 
@@ -300,7 +423,8 @@ const match =
 String(text || "")
 .match(/<?a?:\w+:(\d+)>?/);
 
-if(!match) return null;
+if(!match)
+return null;
 
 return
 `https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
@@ -383,7 +507,7 @@ canvas.height
 }
 
 ctx.fillStyle =
-"rgba(0,0,0,.25)";
+"rgba(0,0,0,.22)";
 
 ctx.fillRect(
 0,
@@ -445,18 +569,6 @@ canvas.height
 
 await drawBackground();
 
-const width =
-+$("blockWidth").value;
-
-const height =
-+$("blockHeight").value;
-
-const gapX =
-+$("gapX").value;
-
-const gapY =
-+$("gapY").value;
-
 const useGlobal =
 $("useGlobalColor").checked;
 
@@ -466,26 +578,34 @@ $("globalColor").value;
 const showBorders =
 $("showBorders").checked;
 
-groups.forEach(async(g,i)=>{
+const gapX =
++$("gapX").value;
+
+const gapY =
++$("gapY").value;
+
+for(let i=0;i<data.groups.length;i++){
+
+const g =
+data.groups[i];
+
+if(!g.show)
+continue;
 
 const col = i % 2;
 
 const row =
 Math.floor(i / 2);
 
-const baseX =
-180 +
-(col * (width + gapX));
-
-const baseY =
-120 +
-(row * (height + gapY));
-
 const x =
-baseX + g.x;
+180 +
+(col * (g.width + gapX))
++ g.x;
 
 const y =
-baseY + g.y;
+100 +
+(row * (g.height + gapY))
++ g.y;
 
 const color =
 useGlobal
@@ -497,14 +617,14 @@ ctx.save();
 ctx.shadowColor =
 color;
 
-ctx.shadowBlur = 30;
+ctx.shadowBlur = 24;
 
 roundedRect(
 x,
 y,
-width,
-height,
-24
+g.width,
+g.height,
+22
 );
 
 ctx.fillStyle =
@@ -526,7 +646,7 @@ ctx.stroke();
 ctx.restore();
 
 const rowH =
-height / 4;
+g.height / 4;
 
 for(let t=0;t<4;t++){
 
@@ -542,9 +662,9 @@ ctx.fillStyle =
 "rgba(255,255,255,.08)";
 
 ctx.fillRect(
-x + 20,
+x + 18,
 ty,
-width - 40,
+g.width - 36,
 1
 );
 
@@ -553,31 +673,35 @@ width - 40,
 ctx.fillStyle =
 "white";
 
+ctx.textAlign =
+"left";
+
+ctx.textBaseline =
+"middle";
+
 ctx.font =
 `bold ${Math.max(
 18,
 rowH * .23
 )}px Arial`;
 
-ctx.textBaseline =
-"middle";
-
-ctx.textAlign =
-"left";
-
 ctx.fillText(
 team.name || "?",
-x + 30,
+x + 28,
 ty + rowH/2
 );
 
 const emoji =
-emojiURL(team.emoji);
+emojiURL(
+team.emoji
+);
 
 if(emoji){
 
 const img =
-await loadImage(emoji);
+await loadImage(
+emoji
+);
 
 if(img){
 
@@ -586,7 +710,7 @@ rowH * .58;
 
 ctx.drawImage(
 img,
-x + width - size - 26,
+x + g.width - size - 24,
 ty + rowH/2 - size/2,
 size,
 size
@@ -603,9 +727,9 @@ if(layoutMode){
 ctx.beginPath();
 
 ctx.arc(
-x + width/2,
-y - 18,
-18,
+x + g.width/2,
+y - 22,
+26,
 0,
 Math.PI * 2
 );
@@ -619,20 +743,20 @@ ctx.fillStyle =
 "white";
 
 ctx.font =
-"bold 12px Arial";
+"bold 14px Arial";
 
 ctx.textAlign =
 "center";
 
 ctx.fillText(
-"M",
-x + width/2,
-y - 14
+"MOVE",
+x + g.width/2,
+y - 18
 );
 
 }
 
-});
+}
 
 }
 
@@ -645,20 +769,8 @@ render();
 
 }
 
-function resetLayout(){
-
-groups.forEach(g=>{
-
-g.x = 0;
-g.y = 0;
-
-});
-
-render();
-
-saveData();
-
-}
+window.toggleLayoutMode =
+toggleLayoutMode;
 
 function pointerPos(e){
 
@@ -691,21 +803,16 @@ return;
 const p =
 pointerPos(e);
 
-const width =
-+$("blockWidth").value;
+for(let i=data.groups.length-1;i>=0;i--){
 
-const height =
-+$("blockHeight").value;
+const g =
+data.groups[i];
 
 const gapX =
 +$("gapX").value;
 
 const gapY =
 +$("gapY").value;
-
-for(let i=groups.length-1;i>=0;i--){
-
-const g = groups[i];
 
 const col = i % 2;
 
@@ -714,19 +821,19 @@ Math.floor(i / 2);
 
 const x =
 180 +
-(col * (width + gapX))
+(col * (g.width + gapX))
 + g.x;
 
 const y =
-120 +
-(row * (height + gapY))
+100 +
+(row * (g.height + gapY))
 + g.y;
 
 if(
-p.x >= x &&
-p.x <= x + width &&
-p.y >= y &&
-p.y <= y + height
+p.x >= x - 30 &&
+p.x <= x + g.width + 30 &&
+p.y >= y - 30 &&
+p.y <= y + g.height + 30
 ){
 
 drag = {
@@ -760,16 +867,36 @@ return;
 const p =
 pointerPos(e);
 
+const dx =
+p.x - drag.startX;
+
+const dy =
+p.y - drag.startY;
+
+if(data.moveAll){
+
+data.groups.forEach(g=>{
+
+g.x += dx;
+g.y += dy;
+
+});
+
+drag.startX = p.x;
+drag.startY = p.y;
+
+}else{
+
 const g =
-groups[drag.index];
+data.groups[drag.index];
 
 g.x =
-drag.origX +
-(p.x - drag.startX);
+drag.origX + dx;
 
 g.y =
-drag.origY +
-(p.y - drag.startY);
+drag.origY + dy;
+
+}
 
 render();
 
@@ -795,6 +922,9 @@ alert("Saved");
 
 }
 
+window.saveLocal =
+saveLocal;
+
 function downloadImage(){
 
 const a =
@@ -812,19 +942,106 @@ a.click();
 
 }
 
+window.downloadImage =
+downloadImage;
+
+function saveTXT(){
+
+const blob =
+new Blob(
+[
+JSON.stringify(
+data,
+null,
+2
+)
+],
+{
+type:"text/plain"
+}
+);
+
+const a =
+document.createElement("a");
+
+a.href =
+URL.createObjectURL(blob);
+
+a.download =
+"groups.txt";
+
+a.click();
+
+}
+
+window.saveTXT =
+saveTXT;
+
+function loadTXT(){
+
+$("txtLoader").click();
+
+}
+
+window.loadTXT =
+loadTXT;
+
+$("txtLoader")
+?.addEventListener(
+"change",
+e=>{
+
+const file =
+e.target.files[0];
+
+if(!file)
+return;
+
+const reader =
+new FileReader();
+
+reader.onload =
+()=>{
+
+try{
+
+data =
+JSON.parse(
+reader.result
+);
+
+saveData();
+
+renderSidebar();
+
+render();
+
+}catch{
+
+alert(
+"Invalid file"
+);
+
+}
+
+};
+
+reader.readAsText(file);
+
+}
+);
+
 [
 "bgUrl",
 "globalColor",
 "useGlobalColor",
 "showBorders",
-"blockWidth",
-"blockHeight",
 "gapX",
 "gapY"
 ]
 .forEach(id=>{
 
-$(id).addEventListener(
+$(id)?.addEventListener(
 "input",
 ()=>{
 
