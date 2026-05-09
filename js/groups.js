@@ -1,9 +1,13 @@
-// REEMPLAZA COMPLETAMENTE js/groups.js
+// js/groups.js COMPLETO
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas =
+document.getElementById("canvas");
 
-const $ = id => document.getElementById(id);
+const ctx =
+canvas.getContext("2d");
+
+const $ = id =>
+document.getElementById(id);
 
 canvas.width = 1600;
 canvas.height = 900;
@@ -11,9 +15,11 @@ canvas.height = 900;
 const DEFAULT_BG =
 "https://i.imgur.com/Z72kUog.png";
 
-const imageCache = new Map();
+const imageCache =
+new Map();
 
-const sidebar = $("sidebar");
+const sidebar =
+$("sidebar");
 
 let sidebarOpen = false;
 
@@ -21,31 +27,32 @@ let layoutMode = false;
 
 let drag = null;
 
-const defaultData = {
-bgUrl: DEFAULT_BG,
-globalColor: "#6f8cff",
-useGlobalColor: true,
-showBorders: true,
-moveAll: false,
-blockWidth: 360,
-blockHeight: 210,
-gapX: 35,
-gapY: 28,
-groups: []
-};
-
 let data =
 JSON.parse(
-localStorage.getItem("zzm_groups_v2")
+localStorage.getItem(
+"zzm_groups_v3"
+)
 || "null"
 )
-|| structuredClone(defaultData);
+||
+{
+bgUrl:DEFAULT_BG,
+globalColor:"#6f8cff",
+useGlobalColor:true,
+showBorders:true,
+moveAll:false,
+gapX:35,
+gapY:28,
+groups:[]
+};
 
 if(!data.groups.length){
 
 for(let i=0;i<2;i++){
 
-data.groups.push(createGroup());
+data.groups.push(
+createGroup()
+);
 
 }
 
@@ -91,7 +98,7 @@ emoji:"<:LOGO:1501791652354719925>"
 function saveData(){
 
 localStorage.setItem(
-"zzm_groups_v2",
+"zzm_groups_v3",
 JSON.stringify(data)
 );
 
@@ -101,12 +108,17 @@ function toggleSidebar(){
 
 sidebarOpen = !sidebarOpen;
 
-if(window.innerWidth <= 900){
+if(sidebarOpen){
 
-sidebar.style.transform =
-sidebarOpen
-? "translateX(0)"
-: "translateX(-100%)";
+sidebar.classList.add(
+"open"
+);
+
+}else{
+
+sidebar.classList.remove(
+"open"
+);
 
 }
 
@@ -115,32 +127,11 @@ sidebarOpen
 window.toggleSidebar =
 toggleSidebar;
 
-window.addEventListener("resize",()=>{
-
-if(window.innerWidth > 900){
-
-sidebar.style.transform =
-"translateX(0)";
-
-}else{
-
-sidebar.style.transform =
-"translateX(-100%)";
-
-}
-
-});
-
-if(window.innerWidth <= 900){
-
-sidebar.style.transform =
-"translateX(-100%)";
-
-}
-
 function addGroup(){
 
-data.groups.push(createGroup());
+data.groups.push(
+createGroup()
+);
 
 renderSidebar();
 
@@ -150,7 +141,8 @@ saveData();
 
 }
 
-window.addGroup = addGroup;
+window.addGroup =
+addGroup;
 
 function removeGroup(i){
 
@@ -164,7 +156,8 @@ saveData();
 
 }
 
-window.removeGroup = removeGroup;
+window.removeGroup =
+removeGroup;
 
 function renderSidebar(){
 
@@ -207,22 +200,6 @@ data-group="${i}"
 value="${g.color}"
 >
 
-<div class="check-line">
-
-<input
-type="checkbox"
-class="group-show"
-data-group="${i}"
-${g.show ? "checked" : ""}
-
->
-
-<span>
-Show Block
-</span>
-
-</div>
-
 <label>Width</label>
 
 <input
@@ -244,6 +221,22 @@ value="${g.height}"
 class="group-height"
 data-group="${i}"
 >
+
+<div class="check-line">
+
+<input
+type="checkbox"
+class="group-show"
+data-group="${i}"
+${g.show ? "checked" : ""}
+
+>
+
+<span>
+Show block
+</span>
+
+</div>
 
 ${g.teams.map((t,ti)=>`
 
@@ -353,27 +346,6 @@ saveData();
 });
 
 document
-.querySelectorAll(".group-show")
-.forEach(el=>{
-
-el.onchange = e=>{
-
-const g =
-+e.target.dataset.group;
-
-data.groups[g]
-.show =
-e.target.checked;
-
-render();
-
-saveData();
-
-};
-
-});
-
-document
 .querySelectorAll(".group-width")
 .forEach(el=>{
 
@@ -415,6 +387,27 @@ saveData();
 
 });
 
+document
+.querySelectorAll(".group-show")
+.forEach(el=>{
+
+el.onchange = e=>{
+
+const g =
++e.target.dataset.group;
+
+data.groups[g]
+.show =
+e.target.checked;
+
+render();
+
+saveData();
+
+};
+
+});
+
 }
 
 function emojiURL(text){
@@ -443,7 +436,8 @@ return resolve(
 imageCache.get(src)
 );
 
-const img = new Image();
+const img =
+new Image();
 
 img.crossOrigin =
 "anonymous";
@@ -495,7 +489,7 @@ canvas.height
 }else{
 
 ctx.fillStyle =
-"#0b0f18";
+"#10131d";
 
 ctx.fillRect(
 0,
@@ -569,6 +563,12 @@ canvas.height
 
 await drawBackground();
 
+const gapX =
++$("gapX").value;
+
+const gapY =
++$("gapY").value;
+
 const useGlobal =
 $("useGlobalColor").checked;
 
@@ -578,12 +578,6 @@ $("globalColor").value;
 const showBorders =
 $("showBorders").checked;
 
-const gapX =
-+$("gapX").value;
-
-const gapY =
-+$("gapY").value;
-
 for(let i=0;i<data.groups.length;i++){
 
 const g =
@@ -592,18 +586,25 @@ data.groups[i];
 if(!g.show)
 continue;
 
-const col = i % 2;
+const col =
+i % 2;
 
 const row =
 Math.floor(i / 2);
 
+const startX =
+120;
+
+const startY =
+100;
+
 const x =
-180 +
+startX +
 (col * (g.width + gapX))
 + g.x;
 
 const y =
-100 +
+startY +
 (row * (g.height + gapY))
 + g.y;
 
@@ -628,7 +629,7 @@ g.height,
 );
 
 ctx.fillStyle =
-"rgba(0,0,0,.45)";
+"rgba(0,0,0,.48)";
 
 ctx.fill();
 
@@ -662,9 +663,9 @@ ctx.fillStyle =
 "rgba(255,255,255,.08)";
 
 ctx.fillRect(
-x + 18,
+x + 20,
 ty,
-g.width - 36,
+g.width - 40,
 1
 );
 
@@ -682,12 +683,12 @@ ctx.textBaseline =
 ctx.font =
 `bold ${Math.max(
 18,
-rowH * .23
+rowH * .22
 )}px Arial`;
 
 ctx.fillText(
 team.name || "?",
-x + 28,
+x + 30,
 ty + rowH/2
 );
 
@@ -710,7 +711,7 @@ rowH * .58;
 
 ctx.drawImage(
 img,
-x + g.width - size - 24,
+x + g.width - size - 26,
 ty + rowH/2 - size/2,
 size,
 size
@@ -728,8 +729,8 @@ ctx.beginPath();
 
 ctx.arc(
 x + g.width/2,
-y - 22,
-26,
+y - 20,
+28,
 0,
 Math.PI * 2
 );
@@ -742,16 +743,16 @@ ctx.fill();
 ctx.fillStyle =
 "white";
 
-ctx.font =
-"bold 14px Arial";
-
 ctx.textAlign =
 "center";
+
+ctx.font =
+"bold 13px Arial";
 
 ctx.fillText(
 "MOVE",
 x + g.width/2,
-y - 18
+y - 16
 );
 
 }
@@ -771,6 +772,24 @@ render();
 
 window.toggleLayoutMode =
 toggleLayoutMode;
+
+function resetLayout(){
+
+data.groups.forEach(g=>{
+
+g.x = 0;
+g.y = 0;
+
+});
+
+render();
+
+saveData();
+
+}
+
+window.resetLayout =
+resetLayout;
 
 function pointerPos(e){
 
@@ -803,24 +822,25 @@ return;
 const p =
 pointerPos(e);
 
-for(let i=data.groups.length-1;i>=0;i--){
-
-const g =
-data.groups[i];
-
 const gapX =
 +$("gapX").value;
 
 const gapY =
 +$("gapY").value;
 
-const col = i % 2;
+for(let i=data.groups.length-1;i>=0;i--){
+
+const g =
+data.groups[i];
+
+const col =
+i % 2;
 
 const row =
 Math.floor(i / 2);
 
 const x =
-180 +
+120 +
 (col * (g.width + gapX))
 + g.x;
 
@@ -830,10 +850,10 @@ const y =
 + g.y;
 
 if(
-p.x >= x - 30 &&
-p.x <= x + g.width + 30 &&
-p.y >= y - 30 &&
-p.y <= y + g.height + 30
+p.x >= x - 40 &&
+p.x <= x + g.width + 40 &&
+p.y >= y - 40 &&
+p.y <= y + g.height + 40
 ){
 
 drag = {
@@ -873,7 +893,7 @@ p.x - drag.startX;
 const dy =
 p.y - drag.startY;
 
-if(data.moveAll){
+if($("moveAll").checked){
 
 data.groups.forEach(g=>{
 
@@ -965,7 +985,9 @@ const a =
 document.createElement("a");
 
 a.href =
-URL.createObjectURL(blob);
+URL.createObjectURL(
+blob
+);
 
 a.download =
 "groups.txt";
@@ -987,7 +1009,7 @@ window.loadTXT =
 loadTXT;
 
 $("txtLoader")
-?.addEventListener(
+.addEventListener(
 "change",
 e=>{
 
@@ -1026,7 +1048,9 @@ alert(
 
 };
 
-reader.readAsText(file);
+reader.readAsText(
+file
+);
 
 }
 );
@@ -1041,7 +1065,8 @@ reader.readAsText(file);
 ]
 .forEach(id=>{
 
-$(id)?.addEventListener(
+$(id)
+?.addEventListener(
 "input",
 ()=>{
 
