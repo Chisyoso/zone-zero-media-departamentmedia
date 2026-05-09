@@ -1,15 +1,70 @@
+<!-- card.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
-<title>Zone Zero Media - Player Card</title>
+<title>Zone Zero Media - Card Creator</title>
 
 <link rel="stylesheet" href="css/main.css">
 <link rel="stylesheet" href="css/mobile.css">
-<link rel="stylesheet" href="css/card.css">
+
+<style>
+
+.card-grid{
+display:grid;
+gap:12px;
+}
+
+.card-grid input{
+width:100%;
+}
+
+.stats-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-top:10px;
+}
+
+.stats-grid div{
+background:rgba(255,255,255,.04);
+padding:10px;
+border-radius:12px;
+}
+
+.stats-grid label{
+font-size:12px;
+opacity:.7;
+display:block;
+margin-bottom:5px;
+}
+
+input[type="color"]{
+width:100%;
+height:42px;
+border:none;
+border-radius:12px;
+background:none;
+padding:0;
+cursor:pointer;
+}
+
+#canvas{
+width:580px;
+height:746px;
+max-width:100%;
+background:#000;
+border-radius:18px;
+}
+
+</style>
 
 </head>
 <body>
@@ -23,56 +78,103 @@
 <span>MEDIA</span>
 </div>
 
-<button class="toggle-close" onclick="toggleSidebar()">✕</button>
+<button
+class="toggle-close"
+onclick="toggleSidebar()"
+>
+✕
+</button>
 
-<a href="index.html" class="back-btn">
-← 5V5 Generator
+<a
+href="index.html"
+class="back-btn"
+>
+← Back
 </a>
 
 <div class="section">
 
 <h3>Player Card</h3>
 
-<label>Roblox Username</label>
-<input id="username" placeholder="Username">
+<div class="card-grid">
 
-<label>Player Name</label>
-<input id="playerName" placeholder="Display Name">
-
-<label>Team Color</label>
-<input type="color" id="teamColor" value="#00d9ff">
-
-<label>Background URL</label>
+<label>Username</label>
 <input
-id="cardBackground"
-placeholder="Background URL"
+id="card_username"
+placeholder="Roblox username"
 >
 
-<hr>
+<label>Display Name</label>
+<input
+id="card_name"
+placeholder="Player name"
+>
 
-<label>GENERAL</label>
-<input type="number" id="general" value="90">
+<label>Discord Emoji</label>
+<input
+id="card_badge"
+placeholder="<:MEDIAZZ:1501791652354719925>"
+>
 
-<label>DRIBBLING</label>
-<input type="number" id="dribbling" value="90">
+<label>Main Color</label>
+<input
+type="color"
+id="card_color"
+value="#00d9ff"
+>
 
-<label>PASSING</label>
-<input type="number" id="passing" value="90">
+<label>Bottom Background</label>
+<input
+type="color"
+id="card_bg_color"
+value="#00162d"
+>
 
-<label>SHOOTING</label>
-<input type="number" id="shooting" value="90">
+</div>
 
-<label>TEAMWORK</label>
-<input type="number" id="teamwork" value="90">
+<div class="stats-grid">
 
-<label>INDIVIDUAL</label>
-<input type="number" id="individual" value="90">
+<div>
+<label>DRI</label>
+<input id="dribbling" placeholder="99">
+</div>
 
-<label>REACTION</label>
-<input type="number" id="reaction" value="90">
+<div>
+<label>PAS</label>
+<input id="passing" placeholder="99">
+</div>
 
-<label>DEFENSE</label>
-<input type="number" id="defense" value="90">
+<div>
+<label>SHT</label>
+<input id="shooting" placeholder="99">
+</div>
+
+<div>
+<label>DEF</label>
+<input id="defense" placeholder="99">
+</div>
+
+<div>
+<label>TMW</label>
+<input id="teamwork" placeholder="99">
+</div>
+
+<div>
+<label>IND</label>
+<input id="individual" placeholder="99">
+</div>
+
+<div>
+<label>REA</label>
+<input id="reaction" placeholder="99">
+</div>
+
+<div>
+<label>GEN</label>
+<input id="general" placeholder="99">
+</div>
+
+</div>
 
 </div>
 
@@ -90,11 +192,11 @@ Save TXT
 Load TXT
 </button>
 
-<button onclick="reloadAvatarCard()">
+<button onclick="reloadAvatars()">
 Reload Avatar
 </button>
 
-<button onclick="downloadImageCard()">
+<button onclick="downloadImage()">
 Save Photo
 </button>
 
@@ -113,7 +215,7 @@ onclick="toggleSidebar()"
 ☰
 </button>
 
-<h2>PLAYER CARD</h2>
+<h2>Card Creator</h2>
 
 </div>
 
