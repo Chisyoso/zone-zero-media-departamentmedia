@@ -30,19 +30,28 @@ let drag = null;
 let data =
 JSON.parse(
 localStorage.getItem(
-"zzm_groups_v3"
+"zzm_groups_v4"
 )
 || "null"
 )
 ||
 {
 bgUrl:DEFAULT_BG,
+
 globalColor:"#6f8cff",
+
 useGlobalColor:true,
+
 showBorders:true,
+
+minimalBorders:false,
+
 moveAll:false,
+
 gapX:35,
+
 gapY:28,
+
 groups:[]
 };
 
@@ -74,20 +83,20 @@ color:"#6f8cff",
 
 teams:[
 {
-name:"TEAM 1",
-emoji:"<:LOGO:1501791652354719925>"
+name:"",
+emoji:""
 },
 {
-name:"TEAM 2",
-emoji:"<:LOGO:1501791652354719925>"
+name:"",
+emoji:""
 },
 {
-name:"TEAM 3",
-emoji:"<:LOGO:1501791652354719925>"
+name:"",
+emoji:""
 },
 {
-name:"TEAM 4",
-emoji:"<:LOGO:1501791652354719925>"
+name:"",
+emoji:""
 }
 ]
 
@@ -98,7 +107,7 @@ emoji:"<:LOGO:1501791652354719925>"
 function saveData(){
 
 localStorage.setItem(
-"zzm_groups_v3",
+"zzm_groups_v4",
 JSON.stringify(data)
 );
 
@@ -108,19 +117,10 @@ function toggleSidebar(){
 
 sidebarOpen = !sidebarOpen;
 
-if(sidebarOpen){
-
-sidebar.classList.add(
-"open"
+sidebar.classList.toggle(
+"open",
+sidebarOpen
 );
-
-}else{
-
-sidebar.classList.remove(
-"open"
-);
-
-}
 
 }
 
@@ -246,15 +246,15 @@ ${g.teams.map((t,ti)=>`
 class="team-name"
 data-group="${i}"
 data-team="${ti}"
-value="${t.name}"
-placeholder="Team"
+value="${t.name || ""}"
+placeholder="Team Name"
 >
 
 <input
 class="team-emoji"
 data-group="${i}"
 data-team="${ti}"
-value="${t.emoji}"
+value="${t.emoji || ""}"
 placeholder="<:emoji:id>"
 >
 
@@ -333,9 +333,30 @@ el.oninput = e=>{
 const g =
 +e.target.dataset.group;
 
-data.groups[g]
-.color =
+const val =
 e.target.value;
+
+data.groups[g]
+.color = val;
+
+if(
+$("useGlobalColor")
+.checked
+){
+
+data.globalColor =
+val;
+
+$("globalColor").value =
+val;
+
+data.groups.forEach(group=>{
+
+group.color = val;
+
+});
+
+}
 
 render();
 
@@ -414,13 +435,13 @@ function emojiURL(text){
 
 const match =
 String(text || "")
-.match(/<?a?:\w+:(\d+)>?/);
+.trim()
+.match(/<?a?:.+:(\d+)>?/);
 
 if(!match)
 return null;
 
-return
-`https://cdn.discordapp.com/emojis/${match[1]}.png?size=128&quality=lossless`;
+return `https://cdn.discordapp.com/emojis/${match[1]}.png?size=256&quality=lossless`;
 
 }
 
@@ -431,10 +452,13 @@ return new Promise(resolve=>{
 if(!src)
 return resolve(null);
 
-if(imageCache.has(src))
+if(imageCache.has(src)){
+
 return resolve(
 imageCache.get(src)
 );
+
+}
 
 const img =
 new Image();
@@ -501,7 +525,7 @@ canvas.height
 }
 
 ctx.fillStyle =
-"rgba(0,0,0,.22)";
+"rgba(0,0,0,.18)";
 
 ctx.fillRect(
 0,
@@ -578,6 +602,9 @@ $("globalColor").value;
 const showBorders =
 $("showBorders").checked;
 
+const minimalBorders =
+$("minimalBorders").checked;
+
 for(let i=0;i<data.groups.length;i++){
 
 const g =
@@ -616,9 +643,14 @@ useGlobal
 ctx.save();
 
 ctx.shadowColor =
-color;
+minimalBorders
+? "transparent"
+: color;
 
-ctx.shadowBlur = 24;
+ctx.shadowBlur =
+minimalBorders
+? 0
+: 24;
 
 roundedRect(
 x,
@@ -629,16 +661,23 @@ g.height,
 );
 
 ctx.fillStyle =
-"rgba(0,0,0,.48)";
+minimalBorders
+? "rgba(0,0,0,.20)"
+: "rgba(0,0,0,.48)";
 
 ctx.fill();
 
 if(showBorders){
 
-ctx.lineWidth = 3;
+ctx.lineWidth =
+minimalBorders
+? 1
+: 3;
 
 ctx.strokeStyle =
-color;
+minimalBorders
+? "rgba(255,255,255,.18)"
+: color;
 
 ctx.stroke();
 
@@ -657,7 +696,10 @@ g.teams[t];
 const ty =
 y + (t * rowH);
 
-if(t !== 0){
+if(
+t !== 0 &&
+!minimalBorders
+){
 
 ctx.fillStyle =
 "rgba(255,255,255,.08)";
@@ -687,7 +729,7 @@ rowH * .22
 )}px Arial`;
 
 ctx.fillText(
-team.name || "?",
+team.name || "",
 x + 30,
 ty + rowH/2
 );
@@ -1060,6 +1102,7 @@ file
 "globalColor",
 "useGlobalColor",
 "showBorders",
+"minimalBorders",
 "gapX",
 "gapY"
 ]
@@ -1069,6 +1112,22 @@ $(id)
 ?.addEventListener(
 "input",
 ()=>{
+
+if(
+id === "globalColor" &&
+$("useGlobalColor").checked
+){
+
+data.groups.forEach(g=>{
+
+g.color =
+$("globalColor").value;
+
+});
+
+renderSidebar();
+
+}
 
 render();
 
