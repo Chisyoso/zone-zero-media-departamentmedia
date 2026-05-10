@@ -1,5 +1,3 @@
-// js/groups.js COMPLETO
-
 const canvas =
 document.getElementById("canvas");
 
@@ -30,7 +28,7 @@ let drag = null;
 let data =
 JSON.parse(
 localStorage.getItem(
-"zzm_groups_v4"
+"zzm_groups_v3"
 )
 || "null"
 )
@@ -107,7 +105,7 @@ emoji:""
 function saveData(){
 
 localStorage.setItem(
-"zzm_groups_v4",
+"zzm_groups_v3",
 JSON.stringify(data)
 );
 
@@ -247,7 +245,7 @@ class="team-name"
 data-group="${i}"
 data-team="${ti}"
 value="${t.name || ""}"
-placeholder="Team Name"
+placeholder="Team"
 >
 
 <input
@@ -340,8 +338,7 @@ data.groups[g]
 .color = val;
 
 if(
-$("useGlobalColor")
-.checked
+$("useGlobalColor").checked
 ){
 
 data.globalColor =
@@ -662,7 +659,7 @@ g.height,
 
 ctx.fillStyle =
 minimalBorders
-? "rgba(0,0,0,.20)"
+? "rgba(0,0,0,.18)"
 : "rgba(0,0,0,.48)";
 
 ctx.fill();
