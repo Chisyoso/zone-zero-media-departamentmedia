@@ -1,15 +1,12 @@
-<!-- groups.html COMPLETO -->
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
 
 <meta
 name="viewport"
-content="width=device-width,initial-scale=1.0"
+content="width=device-width, initial-scale=1.0"
 >
 
 <title>Groups Generator</title>
@@ -20,26 +17,25 @@ content="width=device-width,initial-scale=1.0"
 <style>
 
 .group-box{
+padding:14px;
+border-radius:18px;
 background:rgba(255,255,255,.04);
-border:1px solid rgba(255,255,255,.07);
-border-radius:16px;
-padding:12px;
+margin-bottom:18px;
 display:flex;
 flex-direction:column;
 gap:10px;
-margin-bottom:14px;
+border:1px solid rgba(255,255,255,.08);
 }
 
 .group-top{
 display:flex;
-justify-content:space-between;
 align-items:center;
+justify-content:space-between;
 }
 
 .group-title{
-font-size:14px;
+font-size:15px;
 font-weight:bold;
-opacity:.85;
 }
 
 .group-remove{
@@ -47,75 +43,31 @@ width:34px;
 height:34px;
 border:none;
 border-radius:10px;
-background:#ff4c4c;
+background:#ff4d4d;
 color:white;
 cursor:pointer;
-font-weight:bold;
 }
 
 .team-item{
-display:flex;
-gap:8px;
-}
-
-.team-item input{
-flex:1;
-}
-
-.layout-box{
-margin-top:14px;
-padding:14px;
-border-radius:16px;
-background:rgba(255,255,255,.04);
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.layout-grid{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:10px;
+gap:8px;
 }
 
 .check-line{
 display:flex;
 align-items:center;
 gap:8px;
-font-size:13px;
+margin-top:6px;
 }
 
-.range{
-width:100%;
-}
-
-.groups-actions{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-top:14px;
-}
-
-.groups-actions button,
-.add-group-btn{
-padding:14px;
-border:none;
-border-radius:14px;
-background:linear-gradient(180deg,#5f5fff,#3a3aff);
-color:white;
-font-weight:bold;
-cursor:pointer;
-}
-
-.add-group-btn{
-width:100%;
-margin-top:14px;
+.check-line input{
+width:auto;
 }
 
 </style>
 
 </head>
-
 <body>
 
 <div class="app">
@@ -129,7 +81,7 @@ id="sidebar"
 
 <h1>ZONE ZERO</h1>
 
-<span>GROUPS</span>
+<span>MEDIA</span>
 
 </div>
 
@@ -138,13 +90,6 @@ class="toggle-close"
 onclick="toggleSidebar()"
 >
 ✕
-</button>
-
-<button
-class="back-btn"
-onclick="location.href='index.html'"
->
-← Back
 </button>
 
 <div class="section">
@@ -167,7 +112,7 @@ id="globalColor"
 value="#6f8cff"
 >
 
-<div class="check-line">
+<label class="check-line">
 
 <input
 type="checkbox"
@@ -176,12 +121,12 @@ checked
 >
 
 <span>
-Use same color for all
+Use Global Color
 </span>
 
-</div>
+</label>
 
-<div class="check-line">
+<label class="check-line">
 
 <input
 type="checkbox"
@@ -190,12 +135,25 @@ checked
 >
 
 <span>
-Show borders
+Show Borders
 </span>
 
-</div>
+</label>
 
-<div class="check-line">
+<label class="check-line">
+
+<input
+type="checkbox"
+id="minimalBorders"
+>
+
+<span>
+Minimal Borders
+</span>
+
+</label>
+
+<label class="check-line">
 
 <input
 type="checkbox"
@@ -203,76 +161,38 @@ id="moveAll"
 >
 
 <span>
-Move all blocks together
+Move All Groups
 </span>
 
-</div>
+</label>
 
-<div class="layout-box">
-
-<b>Layout</b>
-
-<div class="layout-grid">
-
-<div>
-
-<label>Gap X</label>
+<label>Horizontal Gap</label>
 
 <input
-class="range"
 type="range"
 id="gapX"
 min="0"
-max="140"
+max="200"
 value="35"
 >
 
-</div>
-
-<div>
-
-<label>Gap Y</label>
+<label>Vertical Gap</label>
 
 <input
-class="range"
 type="range"
 id="gapY"
 min="0"
-max="140"
+max="200"
 value="28"
 >
 
-</div>
-
-</div>
-
-</div>
-
-<div id="groupsContainer"></div>
-
-<button
-class="add-group-btn"
-onclick="addGroup()"
+<div
+class="actions"
+style="margin-top:18px;"
 >
-+ Add Group
-</button>
 
-<div class="groups-actions">
-
-<button onclick="saveLocal()">
-Save
-</button>
-
-<button onclick="downloadImage()">
-PNG
-</button>
-
-<button onclick="saveTXT()">
-TXT
-</button>
-
-<button onclick="loadTXT()">
-Load
+<button onclick="addGroup()">
+Add Block
 </button>
 
 <button onclick="toggleLayoutMode()">
@@ -283,7 +203,28 @@ Layout
 Reset
 </button>
 
+<button onclick="saveLocal()">
+Save
+</button>
+
+<button onclick="saveTXT()">
+TXT
+</button>
+
+<button onclick="loadTXT()">
+Load
+</button>
+
+<button onclick="downloadImage()">
+PNG
+</button>
+
 </div>
+
+<div
+id="groupsContainer"
+style="margin-top:18px;"
+></div>
 
 </div>
 
@@ -300,7 +241,9 @@ onclick="toggleSidebar()"
 ☰
 </button>
 
-<h2>Groups Editor</h2>
+<h2>
+Groups Editor
+</h2>
 
 </div>
 
@@ -308,8 +251,6 @@ onclick="toggleSidebar()"
 
 <canvas
 id="canvas"
-width="1600"
-height="900"
 ></canvas>
 
 </section>
@@ -328,5 +269,4 @@ accept=".txt,.json"
 <script src="js/groups.js"></script>
 
 </body>
-
 </html>
